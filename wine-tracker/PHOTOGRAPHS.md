@@ -2,8 +2,10 @@
 
 **ChatGPT finds and identifies the photograph. Wine Tracker securely stores it.**
 
-Wine Tracker contains no merchant registry, supplier URLs, scraping rules,
-order parser, search service or image-recognition model. ChatGPT interprets the
+The machine API contains no merchant registry, supplier URLs, scraping rules,
+order parser, search service or image-recognition model. The original UI's
+[optional built-in AI](DOCS.md#optional-built-in-ai) is a separate workflow.
+For the ChatGPT/HA-MCP workflow, ChatGPT interprets the
 order, identifies the supplier, researches suitable sources, checks the actual
 bottle/label and reuse rights, then calls the generic API. A different merchant
 or CDN needs no application change.

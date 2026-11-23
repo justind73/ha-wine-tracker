@@ -5,6 +5,17 @@ and protects browser routes with Home Assistant Ingress. The HA release version 
 Wine Tracker version separately from our custom build, supplied by HA at build
 time. See [upstream maintenance](UPSTREAM_MAINTENANCE.md) for the version flow.
 
+## Prerequisites
+
+You need Home Assistant with Supervisor/app support and, for conversational
+access, a separately configured authenticated HA-MCP connection capable of
+calling `rest_command` actions and returning their responses. Installing Wine
+Tracker does not establish that connection. This guide configures the app side
+and its HA commands, not a particular ChatGPT account or MCP server.
+
+Wine Tracker's optional built-in AI provider is unrelated to this path and may
+remain `none`. See [the two AI workflows](../README.md#optional-built-in-ai--separate-from-chatgptha-mcp).
+
 ## Installation and data
 
 Add `https://github.com/justind73/ha-wine-tracker` to the HA app store and install
@@ -56,9 +67,18 @@ the HA-specific ingress restriction is opt-in outside this HA app manifest.
 ## The six production commands
 
 Copy [wine_tracker.yaml](../examples/home-assistant/wine_tracker.yaml) into
-`/config/packages/wine_tracker.yaml`. The user's configuration already includes
-`homeassistant: packages: !include_dir_named packages`; preserve existing
-configuration instead of adding a second `homeassistant` mapping.
+`/config/packages/wine_tracker.yaml`. First check how your HA configuration loads
+packages. The existing installation uses the following under `homeassistant:`:
+
+```yaml
+homeassistant:
+  packages: !include_dir_named packages
+```
+
+For a new installation, merge this into the existing mapping if package loading
+is not already configured; do not add a second `homeassistant` mapping or replace
+an existing package include. See [HA packages](https://www.home-assistant.io/docs/configuration/packages/).
+The supplied package is designed for the fork app/hostname above.
 
 Generate a new random production API credential privately. Set the same value
 in the app's `wine_api_token` option and as `wine_tracker_api_token` in
@@ -95,9 +115,13 @@ ID/body; conflicting key reuse returns 409. A fresh GET verifies current stock,
 because a retry returns its original saved snapshot. No production stock
 movement is needed solely to test deployment.
 
-Run `ha core check` before applying package edits. Because `rest_command` is
-already loaded, `rest_command.reload` can replace its actions without restarting
-HA Core. Check that exactly the six production Wine Tracker actions remain.
+Run `ha core check` before loading package edits. On an existing installation
+where `rest_command` is already loaded, `rest_command.reload` can replace its
+actions without restarting HA Core. A first installation must also load the
+integration; follow [HA's REST-command setup](https://www.home-assistant.io/integrations/rest_command/)
+and arrange any required Core restart separately. A Wine Tracker app restart
+alone does not load HA YAML. Verify that all six Wine Tracker actions are
+available, preserving any unrelated REST commands.
 
 ## Verification and rollback
 

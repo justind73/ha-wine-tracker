@@ -60,6 +60,12 @@ is enabled. Rate limiting, if needed, belongs at the trusted proxy boundary.
 | PATCH | `/api/v1/wines/<id>` | Update only supplied fields | 200 |
 | POST | `/api/v1/wines/<id>/stock` | Add/consume bottles, optionally with notes | 200 |
 
+Listing supports only `after_id`, `limit` and `missing_image`; there is no
+text-search parameter. Clients follow pagination and search the returned records.
+See [the collection contract](PHOTOGRAPHS.md#read-the-collection). There are no
+versioned deletion, summary/statistics or export endpoints. The original UI and
+its optional built-in AI are separate from this API.
+
 Every write requires `Content-Type: application/json` and `Idempotency-Key`.
 Generate a new UUID for each intended operation and retain it until its outcome
 is known. Allowed keys contain 8–128 ASCII letters, digits, hyphens or
@@ -250,7 +256,9 @@ assistant does not receive it or pass it in tool arguments.
 
 See [the production installation guide](PRODUCTION.md) for
 the complete configuration, beginner-friendly installation steps, logging
-controls, network/authentication boundaries and the Black Pig end-to-end test.
+controls, network/authentication boundaries and read-back verification. The
+Black Pig payloads above illustrate stock updates; run write/retry tests against
+disposable databases, not the live cellar.
 The [ready-to-copy package](../examples/home-assistant/wine_tracker.yaml)
 targets the production app installed from the fork and includes add, stock, update, GET, list and image.
 Use `ha_call_service` with `return_response: true` and inspect both

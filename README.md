@@ -1,416 +1,184 @@
-# Wine Tracker — Justin’s fork
+# Wine Tracker — Justin's fork
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/icon_dark.png">
-    <img src="assets/icon_bright.png" alt="Wine Tracker logo" width="160">
-  </picture>
-</p>
+[![Fork build](https://img.shields.io/badge/fork-1.11.0--api.6-blue)](wine-tracker/config.yaml)
+[![Tests](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml)
+[![MIT licence](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/upstream-v1.11.0-blue.svg" alt="original Wine Tracker version">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
-  <img src="https://img.shields.io/badge/Home%20Assistant-Add--on-41BDF5.svg?logo=homeassistant&logoColor=white" alt="home assistant add-on">
-  <img src="https://img.shields.io/badge/Docker-standalone-2496ED.svg?logo=docker&logoColor=white" alt="docker">
-  <img src="https://img.shields.io/github/last-commit/xenofex7/ha-wine-tracker?logo=github" alt="last commit">
-  <img src="https://img.shields.io/github/commit-activity/y/xenofex7/ha-wine-tracker?logo=github" alt="commit activity">
-</p>
-
-<p align="center">
-  <a href="https://xenofex7.github.io/ha-wine-tracker/"><strong>Documentation &amp; Demo</strong></a>
-</p>
-
-Wine Tracker manages your wine cellar from label photo to tasting note. Snap a
-photo and let AI fill in the details, search Vivino to import ratings and
-prices, then track bottles, drink windows and value over time. It runs as a
-Home Assistant add-on in the HA sidebar, or as a standalone Docker container
-with its own logins.
+Wine Tracker is a wine inventory application for Home Assistant: keep track of
+bottles, photographs, purchase details, tasting notes and drinking windows.
+The original application is by **[xenofex7](https://github.com/xenofex7/ha-wine-tracker)**.
 
 ## About this fork
 
-This is [justind73/ha-wine-tracker](https://github.com/justind73/ha-wine-tracker),
-a customised fork of **[Wine Tracker by xenofex7](https://github.com/xenofex7/ha-wine-tracker)**.
-The original application, history, MIT licence and developer attribution are retained.
-The feature descriptions and screenshots below also document that original application.
+[This fork](https://github.com/justind73/ha-wine-tracker) adds an authenticated
+JSON inventory API and Home Assistant REST commands so ChatGPT can work with
+your actual cellar. You can discuss what to drink, record a purchase or an opened
+bottle, and verify the result without manually re-entering the same information.
+The original application, Git history and MIT copyright notices are retained.
 
-Our additions provide an optional, authenticated JSON inventory API and native
-Home Assistant `rest_command` actions for ChatGPT through HA-MCP. HA holds the
-API credential in its secrets; it is not passed through conversational tool
-arguments. Writes support idempotent retries. ChatGPT identifies wines and
-photographs; Wine Tracker validates and stores images locally with source/rights
-metadata. The fork also fits complete bottles in detail views and thumbnails.
+**Original application version: 1.11.0. Custom build: 1.11.0-api.6.**
+The build comes from [the HA app configuration](wine-tracker/config.yaml);
+Wine Tracker's About screen shows both versions. See the
+[fork changelog](wine-tracker/CHANGELOG.md) for release details.
 
-Fork builds use independent `<upstream-version>-api.N` numbering. The authoritative
-build version is in [the app configuration](wine-tracker/config.yaml), with changes
-in [the fork changelog](wine-tracker/CHANGELOG.md). About displays the original
-version and custom build separately; an upstream release does not automatically
-update this fork or an installed app.
+## ChatGPT + Home Assistant
 
-- [Production installation and HA-MCP setup](wine-tracker/PRODUCTION.md)
-- [JSON API and security contract](wine-tracker/API.md)
-- [Photographs and supplier-independent imports](wine-tracker/PHOTOGRAPHS.md)
-- [Reviewed upstream maintenance](wine-tracker/UPSTREAM_MAINTENANCE.md)
-- [Proposed upstream API contribution](wine-tracker/UPSTREAM_CONTRIBUTION.md)
-
-[![Tests](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml/badge.svg)](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml)
-
-<details>
-<summary>Table of contents</summary>
-
-- [About this fork](#about-this-fork)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Updating](#updating)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [License](#license)
-
-</details>
-
-## Features
-
-### Wine management
-
-- Wine cards with photo, vintage, type, region, grape variety, rating and notes
-- Photo upload straight from your phone
-- Star rating (1-5) and quick `+`/`-` quantity buttons on the card
-- Duplicate a wine when only the vintage changes
-- Bottle formats from Piccolo (0.1875 l) to Nebuchadnezzar (15 l)
-- Empty bottles stay as placeholders, toggle to hide them
-- Drink window (from/until year) and purchase price in your currency
-- Autocomplete for region, grape variety, purchase source and storage location
-
-### AI and integrations
-
-- AI label recognition fills in all fields, including maturity phases, taste
-  profile and food pairings (Anthropic, OpenAI, OpenRouter, Ollama, MiniMax,
-  Mistral)
-- Vivino search by name with ratings, region and price, plus a regional
-  fallback chain so country-specific labels actually show up
-- Vivino ID management: view, edit and test the wine link in the edit modal
-- Reload missing data: re-analyze incomplete wines via AI or Vivino
-- AI sommelier chat with full cellar CRUD: ask about your cellar, upload label
-  photos, add, edit and delete wines from the conversation, with persistent
-  chat history
-- Maturity graph as an AI-generated bell curve (Youth, Maturity, Peak, Decline)
-- Taste profile and food pairings as body/tannin/acidity/sweetness bars with
-  matching dishes
-
-### Views, filters and statistics
-
-- Four cellar view modes: Cards, List, Grid and a sortable Table view
-- Quick filter by wine type, vintage and grape variety
-- Advanced filter: AND-combined conditions across every field, with text,
-  number, choice and drink-window operators and autocomplete in the inputs
-- Save filter sets as presets, and make the advanced filter the default one
-- Activity timeline of wines added, consumed, restocked or removed
-- Interactive 3D globe of your wine regions
-- Statistics with donut charts, stock history, total bottles, total liters,
-  value overview and average age
-
-### Platform
-
-- Six themes, each with a dark and a light mode
-- Seven languages: German, English, French, Italian, Spanish, Portuguese, Dutch
-- Fully responsive, with a hamburger menu on narrow viewports
-- Home Assistant ingress: embedded in the HA sidebar
-- Legacy `/api/summary` route (ingress-only in this HA fork); authenticated
-  machine access uses `/api/v1` and the HA commands linked above
-- Backup and restore: export the cellar as a ZIP (JSON + CSV + images) and
-  import it back with a duplicate preview
-- Per-user logins with read-only accounts in Docker standalone mode
-
-## Screenshots
-
-<p align="center">
-  <img src="assets/261018_main_screen.png" alt="Cellar overview" width="800">
-</p>
-<p align="center">
-  <img src="assets/261018_statistics_screen.png" alt="Statistics with globe and charts" width="800">
-</p>
-<p align="center">
-  <img src="assets/261018_add_wine_screen.png" alt="Add a wine via AI, Vivino or manually" width="800">
-  <img src="assets/261018_wine_edit_screen.png" alt="Edit wine details" width="800">
-</p>
-
-## Requirements
-
-- Home Assistant with the Supervisor (HA OS or Supervised) for the add-on, on
-  aarch64, amd64, armhf, armv7 or i386
-- Docker 24+ with Compose v2 for the standalone container, on amd64 or arm64
-- An API key for one AI provider, only if you want label recognition and the
-  sommelier chat. Ollama runs locally and needs no key.
-- Everything else, including Vivino search, works without an account
-
-## Installation
-
-### Home Assistant add-on
-
-[![Add Repository to My Home Assistant][my-ha-badge]][my-ha-url]
-
-Or add it manually:
-
-1. Go to **Settings → Apps → App Store**
-2. Top right: **... -> Repositories**
-3. Add `https://github.com/justind73/ha-wine-tracker`
-4. Select **Wine Tracker** from **Wine Tracker — Justin’s fork**
-5. Click **Install**, then **Start**
-
-The app opens in the HA sidebar under **Wine Tracker** through authenticated
-ingress; this fork does not publish port 5050. When migrating from an existing
-installation, follow the [production guide](wine-tracker/PRODUCTION.md): back up
-first and stop the old app before starting the fork. Both use
-`/share/wine-tracker/`; never run them against that data at the same time.
-
-### Docker standalone
-
-Build this fork locally from a reviewed checkout before using the Compose example:
-
-```bash
-git clone https://github.com/justind73/ha-wine-tracker.git
-cd ha-wine-tracker
-docker build -f docker/Dockerfile -t wine-tracker-fork .
+```text
+ChatGPT → Home Assistant MCP (HA-MCP) → Home Assistant REST commands
+        → authenticated Wine Tracker JSON API → Wine Tracker database
 ```
 
-The original published image, `ghcr.io/xenofex7/wine-tracker:1.11.0`, is maintained
-by the [upstream project](https://github.com/xenofex7/ha-wine-tracker#docker-standalone)
-and does not contain this fork’s API/UI additions. No fork image publication is
-required for the local build or the HA app.
+Home Assistant calls six fixed commands with its locally held API credential.
+ChatGPT supplies wine data and operation identifiers; the Wine Tracker secret
+stays out of conversations and tool arguments.
 
-1. Create a `docker-compose.yml`:
+With an appropriately configured HA-MCP connection, ChatGPT can:
 
-```yaml
-services:
-  wine-tracker:
-    image: wine-tracker-fork
-    ports:
-      - "5050:5050"
-    volumes:
-      - wine-data:/data
-    environment:
-      - AUTH_ENABLED=true
-      - USERS=admin:changeme
-      - SECRET_KEY=change-this-to-a-random-string
-      - CURRENCY=CHF
-      - LANGUAGE=de
-    restart: unless-stopped
+- Read the collection and find wines by examining the returned records.
+- Recommend wines from your stock and discuss food pairings, producers and
+  drinking windows using its own knowledge and available research tools.
+- Create wine records, add or consume bottles, append or replace tasting notes,
+  and update supported details such as price, rating and drinking years.
+- Identify suitable bottle photographs and attach them with source and rights
+  metadata. Wine Tracker validates and stores the actual image locally.
+- Read records back to verify changes and summarise what happened.
 
-volumes:
-  wine-data:
-```
+The API provides paginated listing, individual reads and validated writes.
+It does **not** provide wine advice, text-search queries, merchant scraping,
+order recognition, email access or record deletion. ChatGPT handles interpretation
+and research outside Wine Tracker; matching an ambiguous wine may need clarification.
+The image endpoint fetches a caller-selected image, not search results.
 
-2. Start it:
+Writes are **idempotent**: retrying the same operation with the same request ID
+and payload does not consume a second bottle or append the same note again.
+A new ID is a new operation; clients must retain IDs across uncertain retries
+and read back current records. See the [API contract](wine-tracker/API.md).
 
-```bash
-docker compose up -d
-```
+### Example conversations
 
-Wine Tracker is now running at `http://localhost:5050`.
+- “Which of my wines would pair best with grilled lamb?”
+- “What Côte-Rôtie do I currently have?”
+- “I've opened a bottle of this wine. Update my stock.”
+- “Which bottles are approaching their drinking window?”
 
-For every available option, copy [`.env.example`](.env.example) to `.env` and
-reference it with `env_file: .env`, or start from
-[`docker/docker-compose.yml`](docker/docker-compose.yml). That inherited example
-selects the upstream image by default; use its documented local-build alternative
-for this fork. Replace the illustrative login/session secrets before use.
+These illustrate workflows, not guarantees of autonomous recognition or action.
+The assistant needs access to the relevant records and tools. An order you
+supply can inform new records and received stock; this integration does not
+fetch your email automatically. The [photograph and order guide](wine-tracker/PHOTOGRAPHS.md)
+explains matching, stable retry IDs and read-back summaries. Image rights are
+caller-supplied metadata: unknown rights remain unverified, and private use
+does not itself grant permission to copy a photograph.
 
-## Updating
+## Features inherited from Wine Tracker
 
-Export a backup first: **Settings -> Data -> Export backup** writes a ZIP with
-wine/timeline JSON, a CSV and all images. Keep a consistent data-directory
-snapshot as well when preserving API retry receipts; those are not in the ZIP.
+The original application provides:
 
-Home Assistant app: open **Settings → Apps → Wine Tracker** and click
-**Update** when a new version is offered.
+- Inventory and stock management, bottle formats, locations, prices, ratings,
+  photographs, notes and an activity timeline.
+- Drinking windows, maturity and taste visualisations, statistics and a region globe.
+- Cards, list, grid and table views; search, quick filters and saved advanced filters.
+- Import/export and ZIP backups containing wine data, history and wine photographs.
+- Six themes, light/dark modes and seven languages: German, English, French,
+  Italian, Spanish, Portuguese and Dutch.
+- Vivino search/import and optional built-in AI label recognition, enrichment
+  and sommelier chat.
 
-For this fork, review and test the intended changes before updating, following
-[the maintenance guide](wine-tracker/UPSTREAM_MAINTENANCE.md). Documentation/CI
-housekeeping alone needs no application version bump or HA deployment.
+[Usage, configuration and inherited screenshots](wine-tracker/DOCS.md) describe
+these features. AI-generated details depend on a configured provider and should
+be checked against the bottle or source.
 
-Docker standalone: check out the reviewed fork commit, then rebuild and restart:
+## Installation and requirements
 
-```bash
-docker build -f docker/Dockerfile -t wine-tracker-fork .
-docker compose up -d
-```
+### Home Assistant (primary installation)
 
-## Configuration
+There are three separate pieces:
 
-Both deployments share the same settings. The add-on reads them from the
-Home Assistant add-on configuration page, the Docker container from
-environment variables.
+| Piece | What it needs |
+| --- | --- |
+| Wine Tracker app | Home Assistant with Supervisor/app support, on an architecture listed in [config.yaml](wine-tracker/config.yaml). No AI provider is required for manual inventory management. |
+| ChatGPT connection | A separately configured, authenticated HA-MCP connection that can call the six REST actions and return their responses. Wine Tracker does not install this connection. |
+| Machine API | A generated Wine Tracker API credential, configured in the app and HA secrets, plus the native REST-command package. The API is disabled until configured. |
 
-> **AI settings saved in the app win.** Provider, API key, model and chat model
-> can also be set under **Settings -> AI**, including a connection test. Those
-> values are stored in the database and override both the Home Assistant
-> options and the environment variables.
+1. Add `https://github.com/justind73/ha-wine-tracker` to the Home Assistant app
+   store repositories. Install **Wine Tracker** from **Wine Tracker — Justin's fork**.
+2. If replacing another Wine Tracker installation, first back up its data and
+   stop it. Both use `/share/wine-tracker/`; **never run two apps against that database**.
+3. Start the fork and open it through Home Assistant's **Open Web UI** or sidebar.
+   This HA app is **ingress-only and publishes no host port**. HA authenticates
+   browser access; the machine API independently requires its own credential.
+4. For ChatGPT access, follow the [production setup guide](wine-tracker/PRODUCTION.md):
+   configure the credential privately, install the
+   [six production commands](wine-tracker/PRODUCTION.md#the-six-production-commands),
+   and verify list/get through your HA-MCP connection. Do not put the credential
+   in ChatGPT messages, tool arguments or Git.
 
-### General
+**Installing Wine Tracker alone does not connect it to ChatGPT.** Leave the
+built-in AI provider set to `none` if you only want the ChatGPT/HA-MCP workflow.
+Do not expose port 5050 or bypass ingress to enable the integration.
 
-| Option | ENV | Default | Description |
-|--------|-----|---------|-------------|
-| `currency` | `CURRENCY` | `CHF` | Currency shown with prices. `CHF`, `EUR`, `USD`, `GBP`, `CAD`, `AUD`, `SEK`, `NOK`, `DKK`, `PLN`, `CZK` and `BRL` also pick the Vivino region; any other value falls back to US/USD there. |
-| `language` | `LANGUAGE` | `de` | UI language: `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
+### Backups and updates
 
-### AI provider
+Data lives at `/share/wine-tracker/wine.db` and `/share/wine-tracker/uploads/`.
+The standard ZIP export contains wine/timeline JSON, a CSV and referenced wine
+images, including embedded photo provenance. It is **not a full database snapshot**:
+API retry receipts, app settings, chat history and filter presets are not exported.
+CSV alone does not preserve photographs.
 
-Pick one provider and set its key and model. The AI drives label recognition,
-the maturity/taste/food enrichment and the sommelier chat.
+For rollback, also keep a consistent private copy of the complete data directory
+while Wine Tracker is stopped, plus its configuration. This preserves retry
+receipts; after restoring a ZIP or an older snapshot, reconcile records before
+retrying old requests. Follow the [production verification and rollback guide](wine-tracker/PRODUCTION.md#verification-and-rollback).
+Install reviewed, tested fork updates using the
+[maintenance procedure](wine-tracker/UPSTREAM_MAINTENANCE.md); upstream changes
+are not automatically merged or deployed.
 
-| Option | ENV | Default | Description |
-|--------|-----|---------|-------------|
-| `ai_provider` | `AI_PROVIDER` | `none` | `none`, `anthropic`, `openai`, `openrouter`, `ollama`, `minimax`, `mistral` |
-| `anthropic_api_key` | `ANTHROPIC_API_KEY` | _(empty)_ | Key from [console.anthropic.com](https://console.anthropic.com) |
-| `anthropic_model` | `ANTHROPIC_MODEL` | `claude-opus-4-8` | Anthropic model identifier |
-| `openai_api_key` | `OPENAI_API_KEY` | _(empty)_ | Key from [platform.openai.com](https://platform.openai.com) |
-| `openai_model` | `OPENAI_MODEL` | `gpt-5.5` | OpenAI vision model |
-| `openrouter_api_key` | `OPENROUTER_API_KEY` | _(empty)_ | Key from [openrouter.ai](https://openrouter.ai) |
-| `openrouter_model` | `OPENROUTER_MODEL` | `anthropic/claude-opus-4.8` | Any vision-capable OpenRouter model |
-| `ollama_host` | `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
-| `ollama_model` | `OLLAMA_MODEL` | `llama3.2-vision` | Ollama vision model |
-| `minimax_api_key` | `MINIMAX_API_KEY` | _(empty)_ | Key from [platform.minimaxi.com](https://platform.minimaxi.com) |
-| `minimax_model` | `MINIMAX_MODEL` | `MiniMax-M3` | MiniMax model, vision-capable despite the name |
-| `mistral_api_key` | `MISTRAL_API_KEY` | _(empty)_ | Key from [console.mistral.ai](https://console.mistral.ai) |
-| `mistral_model` | `MISTRAL_MODEL` | `mistral-medium-latest` | Mistral model, use a Pixtral model for label recognition |
-| `chat_model` | `CHAT_MODEL` | _(empty)_ | Separate model for the sommelier chat only. Empty means the chat uses the model above. |
+### Standalone Docker (alternative)
 
-Provider notes:
+The fork can also be built from source with the standalone Dockerfile. Follow
+the [standalone instructions](wine-tracker/DOCS.md#standalone-docker-alternative)
+for a separate persistent volume, browser authentication and API configuration.
+The inherited Compose file references an upstream image; that image does not
+include this fork's API. Standalone Docker is not the HA ingress installation.
 
-- **Ollama** runs fully local and needs no key. Pull a vision model with
-  `ollama pull llama3.2-vision`. From inside a container, `localhost` is the
-  container itself, so point `ollama_host` at `http://host.docker.internal:11434`
-  or at the Ollama container name.
-- **Mistral** needs a vision model for label recognition, for example
-  `mistral-medium-latest` or `pixtral-12b-latest`. Text-only models such as
-  `mistral-large-latest` still work for the sommelier chat.
-- **MiniMax** speaks the OpenAI-compatible API. `MiniMax-M3` accepts image
-  input; the older `MiniMax-VL-01` name is no longer accepted.
-- A typical label analysis costs around 2,500 tokens. Check your provider's
-  pricing page for current rates.
+## Optional built-in AI — separate from ChatGPT/HA-MCP
 
-### Docker environment variables
+The original Wine Tracker UI has its own AI label recognition, enrichment and
+sommelier chat. It calls **OpenAI, Anthropic, OpenRouter, Ollama, MiniMax or
+Mistral**, as configured in **Settings → AI**. Those features use the selected
+provider directly, independently of HA-MCP.
 
-[`.env.example`](.env.example) lists every variable with inline comments. The
-ones you will usually set:
+**You do not need to configure that provider to use our ChatGPT integration.**
+External providers require their own API access/key; a local Ollama setup needs
+a reachable server and a suitable installed model. Model availability and image
+support depend on the provider and chosen model. A ChatGPT subscription does
+not automatically configure or fund Wine Tracker's OpenAI API access; check
+[OpenAI's separate billing guidance](https://help.openai.com/en/articles/9039756-managing-billing-for-chatgpt-and-the-api-platform).
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AUTH_ENABLED` | `false` | Enable login (`true` / `false`) |
-| `USERS` | _(empty)_ | User list, see the format below |
-| `SECRET_KEY` | _(random)_ | Session key. Set a fixed value so logins survive restarts. |
-| `DATA_DIR` | `/data/wine-tracker` | Where database and images live inside the container |
+See the [built-in AI reference](wine-tracker/DOCS.md#optional-built-in-ai)
+for configuration defaults, precedence and troubleshooting. The original
+sommelier can edit/delete when its **Edit wines via chat** setting is enabled;
+the scoped HA-MCP API has **no deletion operation**.
 
-**User format:** `user1:password1,user2:password2,guest:password3:readonly`
+## Development and maintenance
 
-Users are comma-separated. Each entry is `username:password` for full access or
-`username:password:readonly` for view only. Read-only users can browse and
-search but cannot add, edit or delete.
+| Guide | Contents |
+| --- | --- |
+| [Application reference](wine-tracker/DOCS.md) | UI usage, screenshots, provider settings, standalone Docker, local development and tests |
+| [Production setup](wine-tracker/PRODUCTION.md) | HA installation, six commands, secrets, verification and rollback |
+| [JSON API](wine-tracker/API.md) | Authentication, supported fields, validation and safe retries |
+| [Photographs and orders](wine-tracker/PHOTOGRAPHS.md) | Local storage, provenance, rights and supplier-independent workflows |
+| [Upstream maintenance](wine-tracker/UPSTREAM_MAINTENANCE.md) | Review upstream changes, resolve conflicts, test and update deliberately |
+| [Proposed upstream contribution](wine-tracker/UPSTREAM_CONTRIBUTION.md) | A focused generic API contribution, excluding local configuration; not submitted |
+| [Roadmap](ROADMAP.md) | Delivered fork features and remaining ideas inherited from upstream |
 
-### Data persistence
+The [test workflow](.github/workflows/tests.yml) runs on pull requests and pushes
+to `main`. Development/tests use separate local data, never the live cellar.
+Documentation-only maintenance does not need a new app version or deployment.
 
-All data lives in a single directory: `/share/wine-tracker/` for the add-on,
-the `/data` volume for the Docker container. It holds the SQLite database and
-the uploaded images, and survives updates, restarts and Home Assistant updates.
+## Licence and attribution
 
-## Usage
+Original Wine Tracker: **[xenofex7/ha-wine-tracker](https://github.com/xenofex7/ha-wine-tracker)**.
+Custom fork: **[justind73/ha-wine-tracker](https://github.com/justind73/ha-wine-tracker)**.
 
-Add a wine with the **+** button and pick one of three ways: snap a label photo
-for AI recognition, search Vivino by name, or fill in the fields yourself. The
-AI route also fills maturity phases, taste profile and food pairings.
-
-Use the quick filter in the header for type, vintage and grape. For anything
-beyond that, open the advanced filter: conditions across all fields are
-AND-combined, and a filter set you use often can be saved as a preset and made
-the default.
-
-### Home Assistant sensor
-
-The inherited example below uses the legacy `/api/summary` route. It applies
-only to a separately secured standalone deployment with suitable access to that
-route; it will not work against this fork’s ingress-only HA app. For the fork,
-use the [authenticated HA commands](wine-tracker/PRODUCTION.md#the-six-production-commands).
-Do not expose port 5050 or weaken authentication to make this example work.
-
-```yaml
-# configuration.yaml
-sensor:
-  - platform: rest
-    name: "Wine Stock"
-    resource: "http://localhost:5050/api/summary"
-    value_template: "{{ value_json.total_bottles }}"
-    unit_of_measurement: "bottles"
-    json_attributes:
-      - by_type
-    scan_interval: 3600
-```
-
-Adjust the standalone destination and authentication to that deployment before use.
-
-### Authenticated machine API
-
-An optional JSON API supports creating wines, consuming/restocking bottles and
-updating selected details or appending tasting notes. It requires a separately
-configured `wine_api_token` (`WINE_API_TOKEN` in Docker) and a retry key for every
-write. It is disabled by default. See [API documentation](wine-tracker/API.md)
-for setup, security boundaries, request examples and Home Assistant MCP usage.
-The [production integration guide](wine-tracker/PRODUCTION.md) provides native
-HA REST commands with locally held secrets. This fork's HA app uses authenticated
-Ingress for the UI and publishes no LAN port; machine requests use the scoped API.
-
-## Development
-
-Run the app straight from the checkout:
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r wine-tracker/requirements.txt
-DEV_AUTH=admin:pass python3 wine-tracker/app/app.py
-```
-
-`DEV_AUTH` enables the login with a single user, so you can exercise the auth
-paths without Home Assistant. Without it the app starts unauthenticated. Data
-lands in `wine-tracker/app/data/`.
-
-Every feature and every bugfix ships with tests:
-
-```bash
-pip install -r wine-tracker/requirements-test.txt
-cd wine-tracker && pytest tests/ -v
-```
-
-Commit messages use the prefixes Add, Fix, Update, Remove, Refactor and Polish,
-in the imperative, with a first line of at most 72 characters.
-
-## Troubleshooting
-
-**The sidebar panel is missing for other household members.** Home Assistant
-only shows add-on ingress panels to admin users, and the add-on cannot change
-that. Run Wine Tracker in Docker standalone mode instead and give everyone
-their own login, read-only if you like.
-
-**Ollama is unreachable from the container.** `http://localhost:11434` points at
-the Wine Tracker container itself. Use `http://host.docker.internal:11434` or
-the Ollama container's name.
-
-**Mistral returns nothing for a label photo.** Label recognition needs a vision
-model. `mistral-large-latest` cannot read images, `mistral-medium-latest` and
-the Pixtral models can.
-
-**Logins are gone after a restart.** Set a fixed `SECRET_KEY`. Without it a new
-key is generated on every start and all sessions are invalidated.
-
-## Roadmap
-
-Planned features are tracked in [ROADMAP.md](ROADMAP.md).
-
-## License
-
-Original application by [xenofex7](https://github.com/xenofex7/ha-wine-tracker).
-MIT, see the unchanged [LICENSE](LICENSE).
-
-[my-ha-badge]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
-[my-ha-url]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjustind73%2Fha-wine-tracker
+Copyright (c) 2026 xenofex7. Distributed under the [MIT licence](LICENSE);
+the original copyright and licence notices remain unchanged.
