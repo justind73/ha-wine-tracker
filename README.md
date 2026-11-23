@@ -1,4 +1,4 @@
-# Wine Tracker - Home Assistant Add-on & Docker Standalone
+# Wine Tracker — Justin’s fork
 
 <p align="center">
   <picture>
@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.11.0-blue.svg" alt="version">
+  <img src="https://img.shields.io/badge/upstream-v1.11.0-blue.svg" alt="original Wine Tracker version">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
   <img src="https://img.shields.io/badge/Home%20Assistant-Add--on-41BDF5.svg?logo=homeassistant&logoColor=white" alt="home assistant add-on">
   <img src="https://img.shields.io/badge/Docker-standalone-2496ED.svg?logo=docker&logoColor=white" alt="docker">
@@ -26,9 +26,38 @@ prices, then track bottles, drink windows and value over time. It runs as a
 Home Assistant add-on in the HA sidebar, or as a standalone Docker container
 with its own logins.
 
+## About this fork
+
+This is [justind73/ha-wine-tracker](https://github.com/justind73/ha-wine-tracker),
+a customised fork of **[Wine Tracker by xenofex7](https://github.com/xenofex7/ha-wine-tracker)**.
+The original application, history, MIT licence and developer attribution are retained.
+The feature descriptions and screenshots below also document that original application.
+
+Our additions provide an optional, authenticated JSON inventory API and native
+Home Assistant `rest_command` actions for ChatGPT through HA-MCP. HA holds the
+API credential in its secrets; it is not passed through conversational tool
+arguments. Writes support idempotent retries. ChatGPT identifies wines and
+photographs; Wine Tracker validates and stores images locally with source/rights
+metadata. The fork also fits complete bottles in detail views and thumbnails.
+
+Fork builds use independent `<upstream-version>-api.N` numbering. The authoritative
+build version is in [the app configuration](wine-tracker/config.yaml), with changes
+in [the fork changelog](wine-tracker/CHANGELOG.md). About displays the original
+version and custom build separately; an upstream release does not automatically
+update this fork or an installed app.
+
+- [Production installation and HA-MCP setup](wine-tracker/PRODUCTION.md)
+- [JSON API and security contract](wine-tracker/API.md)
+- [Photographs and supplier-independent imports](wine-tracker/PHOTOGRAPHS.md)
+- [Reviewed upstream maintenance](wine-tracker/UPSTREAM_MAINTENANCE.md)
+- [Proposed upstream API contribution](wine-tracker/UPSTREAM_CONTRIBUTION.md)
+
+[![Tests](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml/badge.svg)](https://github.com/justind73/ha-wine-tracker/actions/workflows/tests.yml)
+
 <details>
 <summary>Table of contents</summary>
 
+- [About this fork](#about-this-fork)
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Requirements](#requirements)
@@ -90,7 +119,8 @@ with its own logins.
 - Seven languages: German, English, French, Italian, Spanish, Portuguese, Dutch
 - Fully responsive, with a hamburger menu on narrow viewports
 - Home Assistant ingress: embedded in the HA sidebar
-- REST API at `/api/summary` for HA sensors
+- Legacy `/api/summary` route (ingress-only in this HA fork); authenticated
+  machine access uses `/api/v1` and the HA commands linked above
 - Backup and restore: export the cellar as a ZIP (JSON + CSV + images) and
   import it back with a duplicate preview
 - Per-user logins with read-only accounts in Docker standalone mode
@@ -125,22 +155,39 @@ with its own logins.
 
 Or add it manually:
 
-1. Go to **Settings -> Add-ons -> Add-on Store**
+1. Go to **Settings → Apps → App Store**
 2. Top right: **... -> Repositories**
-3. Add `https://github.com/xenofex7/ha-wine-tracker`
-4. **Wine Tracker** appears in the store
+3. Add `https://github.com/justind73/ha-wine-tracker`
+4. Select **Wine Tracker** from **Wine Tracker — Justin’s fork**
 5. Click **Install**, then **Start**
 
-The add-on opens in the HA sidebar under **Wine Tracker**.
+The app opens in the HA sidebar under **Wine Tracker** through authenticated
+ingress; this fork does not publish port 5050. When migrating from an existing
+installation, follow the [production guide](wine-tracker/PRODUCTION.md): back up
+first and stop the old app before starting the fork. Both use
+`/share/wine-tracker/`; never run them against that data at the same time.
 
 ### Docker standalone
+
+Build this fork locally from a reviewed checkout before using the Compose example:
+
+```bash
+git clone https://github.com/justind73/ha-wine-tracker.git
+cd ha-wine-tracker
+docker build -f docker/Dockerfile -t wine-tracker-fork .
+```
+
+The original published image, `ghcr.io/xenofex7/wine-tracker:1.11.0`, is maintained
+by the [upstream project](https://github.com/xenofex7/ha-wine-tracker#docker-standalone)
+and does not contain this fork’s API/UI additions. No fork image publication is
+required for the local build or the HA app.
 
 1. Create a `docker-compose.yml`:
 
 ```yaml
 services:
   wine-tracker:
-    image: ghcr.io/xenofex7/wine-tracker:1.11.0
+    image: wine-tracker-fork
     ports:
       - "5050:5050"
     volumes:
@@ -167,20 +214,27 @@ Wine Tracker is now running at `http://localhost:5050`.
 
 For every available option, copy [`.env.example`](.env.example) to `.env` and
 reference it with `env_file: .env`, or start from
-[`docker/docker-compose.yml`](docker/docker-compose.yml).
+[`docker/docker-compose.yml`](docker/docker-compose.yml). That inherited example
+selects the upstream image by default; use its documented local-build alternative
+for this fork. Replace the illustrative login/session secrets before use.
 
 ## Updating
 
 Export a backup first: **Settings -> Data -> Export backup** writes a ZIP with
-the database, the CSV and all images.
+wine/timeline JSON, a CSV and all images. Keep a consistent data-directory
+snapshot as well when preserving API retry receipts; those are not in the ZIP.
 
-Home Assistant add-on: open **Settings -> Add-ons -> Wine Tracker** and click
+Home Assistant app: open **Settings → Apps → Wine Tracker** and click
 **Update** when a new version is offered.
 
-Docker standalone: bump the image tag in `docker-compose.yml`, then run
+For this fork, review and test the intended changes before updating, following
+[the maintenance guide](wine-tracker/UPSTREAM_MAINTENANCE.md). Documentation/CI
+housekeeping alone needs no application version bump or HA deployment.
+
+Docker standalone: check out the reviewed fork commit, then rebuild and restart:
 
 ```bash
-docker compose pull
+docker build -f docker/Dockerfile -t wine-tracker-fork .
 docker compose up -d
 ```
 
@@ -275,7 +329,11 @@ the default.
 
 ### Home Assistant sensor
 
-The REST API at `/api/summary` turns your cellar into an HA entity:
+The inherited example below uses the legacy `/api/summary` route. It applies
+only to a separately secured standalone deployment with suitable access to that
+route; it will not work against this fork’s ingress-only HA app. For the fork,
+use the [authenticated HA commands](wine-tracker/PRODUCTION.md#the-six-production-commands).
+Do not expose port 5050 or weaken authentication to make this example work.
 
 ```yaml
 # configuration.yaml
@@ -290,7 +348,7 @@ sensor:
     scan_interval: 3600
 ```
 
-This creates a `sensor.wine_stock` entity for dashboards and automations.
+Adjust the standalone destination and authentication to that deployment before use.
 
 ### Authenticated machine API
 
@@ -351,7 +409,8 @@ Planned features are tracked in [ROADMAP.md](ROADMAP.md).
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+Original application by [xenofex7](https://github.com/xenofex7/ha-wine-tracker).
+MIT, see the unchanged [LICENSE](LICENSE).
 
 [my-ha-badge]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
-[my-ha-url]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fxenofex7%2Fha-wine-tracker
+[my-ha-url]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjustind73%2Fha-wine-tracker
