@@ -1,8 +1,9 @@
 # Production Wine Tracker and Home Assistant MCP
 
 This fork retains the upstream UI and cellar format, adds the scoped JSON API,
-and protects browser routes with Home Assistant Ingress. The HA release is
-`1.11.0-api.2`; the application UI retains the upstream `1.11.0` version string.
+and protects browser routes with Home Assistant Ingress. The HA release version is set in `config.yaml`. About shows the original
+Wine Tracker version separately from our custom build, supplied by HA at build
+time. See [upstream maintenance](UPSTREAM_MAINTENANCE.md) for the version flow.
 
 ## Installation and data
 
@@ -113,6 +114,11 @@ without first reconciling genuine user changes. Remove the previous app only
 after successful verification, retaining recovery backups separately.
 
 ## Maintenance
+
+Follow [the repeatable upstream update procedure](UPSTREAM_MAINTENANCE.md).
+For a possible contribution to the original author, see
+[the focused API recommendation](UPSTREAM_CONTRIBUTION.md); nothing has been
+submitted upstream.
 
 Keep upstream as `https://github.com/xenofex7/ha-wine-tracker`. Future releases
 can be merged into the fork with Git; conflicts are most likely in `app.py`,
