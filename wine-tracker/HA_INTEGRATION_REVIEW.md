@@ -3,6 +3,42 @@
 Prepared for PR #1. Staging installation was subsequently authorized separately.
 The existing app and `/share/wine-tracker/` must remain untouched during staging.
 
+### Installation verification: 23 November 2026
+
+The authorized staging deployment is running as `local_wine_tracker_api_staging`,
+version `0.1.0-d6afe4589e31`, from commit
+`d6afe4589e315ce311e5c588b2384c83d6f66605`. Archive SHA256:
+`96e8b67ed9ff41dcea955f3c6ce50e66b83fc85a0c1becb6f089d9a8c8a8ade2`.
+Protection remains enabled, boot is manual, and there are no host mounts or
+published ports. Deployment used the PC's SSH client with a dedicated local
+private key, username `root`, and verified known-host checking.
+
+Actual HTTP checks inside HA passed after the s6 fix described below:
+
+- Both versioned API and legacy summary reject missing authentication (401).
+- Legacy add/edit/delete/import requests cannot bypass login with an API key or
+  spoofed ingress/user headers (302 to login).
+- Black Pig fixture ID **1**: create six bottles, consume one, replay the same
+  request, then independent GET: **five bottles**, with the personal note once.
+- Reusing that request key with a different body returns 409 and leaves five.
+- Restock two, append notes, explicitly replace notes, and independent GET pass.
+  The remaining **test fixture** has seven bottles and the note
+  `Replacement in staging only.` These are not live-cellar changes.
+
+The four-command package is saved at `/config/packages/wine_tracker_staging.yaml`.
+Its credential was generated and configured entirely on HA, then added to
+`secrets.yaml` without exposing its value to assistant arguments or output.
+The original secrets file is backed up privately in the SSH app's data directory
+at `/data/wine-tracker-api-staging-access/secrets.before-wine-staging.yaml`.
+The existing packages include was preserved, and `ha core check` passed.
+**HA has not been restarted:** first loading `rest_command` and testing through
+HA-MCP still require a separately authorized HA restart. The completed checks
+used the actual staging HTTP API, not the as-yet-unloaded HA actions.
+
+All 477 local tests passed (475 in the sandbox; the two HTTP tests passed when
+rerun with loopback access). PR #1 remains unmerged. The existing Wine Tracker
+app and live cellar were not modified or restarted.
+
 ## Recommendation
 
 Use four native Home Assistant `rest_command` actions. ChatGPT calls them via
@@ -409,7 +445,8 @@ closing only the LAN mapping is not equivalent to authenticating all routes.
   networking must be allowed for the two local HTTP tests. No live credentials
   are needed. GitHub PR CI runs the same suite.
 - Later removal: stop/uninstall **only Wine Tracker API Staging**, remove its
-  local `/addons/wine_tracker_api_staging` source folder, remove this package
+  local `/local_apps/wine_tracker_api_staging` source folder (or `/addons/`
+  through older tools), remove this package
   and only its matching secret entry, then validate and reload REST commands
   where available. Remove its explicit package include if one was added.
   Removing staging storage discards only test data. Never delete anything
