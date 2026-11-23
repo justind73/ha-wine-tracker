@@ -480,6 +480,7 @@ def inject_globals():
         "auth_user": session.get("user") if AUTH_ENABLED else None,
         "auth_readonly": session.get("role") == "readonly" if AUTH_ENABLED else False,
         "app_version": APP_VERSION,
+        "build_version": os.environ.get("WINE_TRACKER_BUILD_VERSION", "").strip(),
         "wine_types": WINE_TYPES,
     }
     # Provide form datalist values for the shared edit modal on every page

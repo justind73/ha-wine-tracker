@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.11.0-api.3
+
+- Show the original Wine Tracker version and our custom build separately in
+  About. Derive the HA build version from its configured build argument; keep
+  upstream attribution and MIT notices, and add a separate fork link.
+- Document reviewed upstream updates and a focused core API contribution plan.
+
+## 1.11.0-api.2
+
+- Add secure, idempotent photograph attachment and a paginated inventory list,
+  with HA actions, source/rights metadata and supplier-independent order guidance.
+
 ## 1.11.0-api.1
 
 - Add an opt-in, token-authenticated JSON API for creating wines, adjusting
