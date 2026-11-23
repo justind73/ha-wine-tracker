@@ -237,54 +237,33 @@ Errors have the shape `{"ok": false, "error": "stock_out_of_range"}`.
 
 ## Home Assistant MCP
 
-Use an HA-MCP version exposing `request_headers` on `ha_manage_app`. Its
-[official tool reference](https://homeassistant-ai.github.io/ha-mcp/tools/)
-documents JSON bodies, caller headers and Ingress routing. Use the actual
-installed Wine Tracker slug discovered with `ha_get_app`. Prefer Ingress by
-omitting `port`; no Home Assistant authentication should be disabled.
+Use Home Assistant's native `rest_command` integration with the credential
+held in `secrets.yaml`. HA-MCP calls four fixed HA actions using ordinary wine
+data and an idempotency key; Home Assistant inserts the secret locally. The
+assistant does not receive it or pass it in tool arguments.
 
-Example **tool arguments**, with placeholders (not a live operation):
+See [the integration review and staging guide](HA_INTEGRATION_REVIEW.md) for
+the complete configuration, beginner-friendly installation steps, logging
+controls, network/authentication boundaries and the Black Pig end-to-end test.
+The [ready-to-copy package](../examples/home-assistant/wine_tracker_staging.yaml)
+targets a separate local staging app and includes add, stock, update and GET.
+Use `ha_call_service` with `return_response: true` and inspect both
+`service_response.status` and `service_response.content.ok`.
 
-```json
-{
-  "slug": "<installed-wine-tracker-slug>",
-  "path": "/api/v1/wines/25/stock",
-  "method": "POST",
-  "request_headers": {
-    "X-Wine-API-Key": "<securely-injected-wine-api-token>",
-    "Idempotency-Key": "41db31cc-c42a-4e60-b223-d62313c56218"
-  },
-  "body": {
-    "delta": -1,
-    "notes": "black pig is easy drinking good value go to evening wine. It’s how I discovered i liked Syrah. - Justin"
-  },
-  "debug": false
-}
-```
-
-Store the Wine Tracker token in a trusted integration's secret store and have
-that integration inject the header. A placeholder in this example is not
-automatically resolved by HA-MCP. Do not paste the real token into a chat,
-prompt, shared tool transcript or source file. If the client cannot inject
-secrets privately, configure a trusted server-side wrapper that does so before
-enabling assistant writes; generic tool arguments may be recorded by clients.
-Review the client/proxy's header redaction and keep debug header logging off.
-Wine Tracker cannot redact another service's logs. Keep the Home Assistant
-credential separate and retain MCP write approval controls.
-
-For note-only changes use `method: "PATCH"` and `/api/v1/wines/25`; for
-verification use `method: "GET"` with the API key and no body. After an uncertain
-outcome, read the wine and retry only with the original key/body. Never weaken
-authentication to work around missing header support. This integration path
-is documented against the tool contract; it has not been exercised against a
-live Home Assistant installation as part of this change.
+Do not pass a real `X-Wine-API-Key` through `ha_manage_app` arguments or chat.
+The native HA action path replaces the earlier generic header-injection
+proposal. In particular, keep REST-command debug logging disabled: HA's debug
+log includes resolved headers. This configuration has been tested at the
+YAML/template and local HTTP boundaries, not deployed to live HA.
 
 ## Development and release scope
 
-Run `python -m pytest tests -q` from `wine-tracker/`. Tests use temporary
+Install `requirements.txt` and `requirements-test.txt`, then run
+`python -m pytest tests -q` from `wine-tracker/`. Tests use temporary
 databases, including the illustrative ID 25 fixture; they do not contact a live
-cellar. No dependencies were added. `wine-tracker-dev/` is a generated release
-copy refreshed by `scripts/sync-dev-addon.sh`; this source change does not run
+cellar. No runtime dependencies were added; YAML integration tests use PyYAML.
+`wine-tracker-dev/` is a generated release copy refreshed by
+`scripts/sync-dev-addon.sh`; this source change does not run
 release/deployment scripts or bump a release version.
 
 Photographs are a separate proposal in [API_PHOTOS_PROPOSAL.md](API_PHOTOS_PROPOSAL.md).

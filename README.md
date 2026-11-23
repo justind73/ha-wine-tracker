@@ -299,6 +299,9 @@ updating selected details or appending tasting notes. It requires a separately
 configured `wine_api_token` (`WINE_API_TOKEN` in Docker) and a retry key for every
 write. It is disabled by default. See [API documentation](wine-tracker/API.md)
 for setup, security boundaries, request examples and Home Assistant MCP usage.
+The [integration and staging guide](wine-tracker/HA_INTEGRATION_REVIEW.md)
+provides native HA REST commands with locally held secrets and an isolated
+test-app package, without exposing the live cellar.
 
 ## Development
 
@@ -317,6 +320,7 @@ lands in `wine-tracker/app/data/`.
 Every feature and every bugfix ships with tests:
 
 ```bash
+pip install -r wine-tracker/requirements-test.txt
 cd wine-tracker && pytest tests/ -v
 ```
 
