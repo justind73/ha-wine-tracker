@@ -1,45 +1,39 @@
-# Home Assistant Add-on: Wine Tracker
+# Home Assistant App: Wine Tracker — Justin's fork
 
-![version][version-badge]
-![license][license-badge]
+Wine Tracker by **[xenofex7](https://github.com/xenofex7/ha-wine-tracker)** manages
+wine inventory, photographs, notes, drinking windows, statistics and backups
+inside Home Assistant. This [custom fork](https://github.com/justind73/ha-wine-tracker)
+retains the original application and MIT licence.
 
-A wine cellar tracker that runs directly in your Home Assistant sidebar.
+**Original version: 1.11.0. Fork build: [1.11.0-api.6](config.yaml).**
+The build version is defined in `config.yaml` and displayed separately in About.
 
-This is [Justin’s fork](https://github.com/justind73/ha-wine-tracker) of
-[Wine Tracker by xenofex7](https://github.com/xenofex7/ha-wine-tracker), retaining
-the original MIT licence. The version badge documents the original version;
-[config.yaml](config.yaml) sets the independent `-api.N` fork build.
-See [the fork overview](../README.md#about-this-fork) and
-[production/HA-MCP setup](PRODUCTION.md) for the authenticated JSON API and installation.
+## What the fork adds
 
-## About
+ChatGPT can read and update the live cellar through HA-MCP, native Home Assistant
+REST commands and an authenticated JSON API. It supports listing/reading wines,
+creating records, consuming/restocking bottles, updating notes/details and
+attaching locally stored photographs with provenance. Writes have retry protection.
+The API does not delete records or perform wine/merchant research.
 
-Wine Tracker manages your whole wine collection from within Home Assistant.
-Snap a label photo and let AI fill in the details, search Vivino to import
-wines with ratings and pricing, or type everything in yourself.
+The original UI's optional AI label recognition, enrichment and sommelier chat
+are separate features. They use a configured external provider or local Ollama;
+**they need not be enabled for ChatGPT/HA-MCP**. Installing the app alone does
+not establish a ChatGPT connection.
 
-**Key features:**
+## Setup and documentation
 
-- AI label recognition with six providers (Anthropic, OpenAI, OpenRouter,
-  Ollama, MiniMax, Mistral)
-- Vivino search with direct import and a regional fallback chain for
-  country-specific labels
-- AI sommelier chat with image upload, persistent history and full cellar CRUD
-- Maturity graph, taste profile and food pairings, auto-filled on every AI add
-- Cellar view modes: Cards, List, Grid and a sortable Table view
-- Advanced filter with AND-combined conditions over every field, saved as
-  reusable presets
-- Activity timeline of wines added, consumed, restocked and removed
-- Statistics with donut charts, stock history, total liters and value overview
-- Interactive 3D globe showing your wine regions
-- Backup and restore as a ZIP with JSON, CSV and images
-- Six themes with dark and light mode, seven languages (DE, EN, FR, IT, ES,
-  PT, NL)
-- Bottle formats from Piccolo to Nebuchadnezzar, star ratings, drink windows
-  and storage locations
+- [Fork overview and installation](../README.md#installation-and-requirements)
+- [Production HA-MCP setup and six REST commands](PRODUCTION.md)
+- [Machine API and security](API.md)
+- [Photographs and supplier orders](PHOTOGRAPHS.md)
+- [Original UI usage, screenshots and optional AI configuration](DOCS.md)
+- [Upstream maintenance](UPSTREAM_MAINTENANCE.md) and [release history](CHANGELOG.md)
 
-Data is stored locally under `/share/wine-tracker/` and preserved across
-updates and restarts.
+Install **Wine Tracker** from **Wine Tracker — Justin's fork** in the HA app
+store. This build uses authenticated ingress and exposes no host port.
+Data is stored in `/share/wine-tracker/`; stop any previous Wine Tracker instance
+before starting the fork against that directory. Follow the production guide's
+ZIP and complete-data backup steps before switching or updating.
 
-[version-badge]: https://img.shields.io/badge/upstream-v1.11.0-blue.svg
-[license-badge]: https://img.shields.io/badge/license-MIT-green.svg
+Copyright (c) 2026 xenofex7. See the unchanged [MIT licence](../LICENSE).
