@@ -3,6 +3,27 @@
 # This fixed hostname is for the production app installed from justind73/ha-wine-tracker only. Do not make it
 # caller-configurable: that would allow the credential to be sent elsewhere.
 rest_command:
+  wine_tracker_list:
+    url: >-
+      http://64183197-wine-tracker:5050/api/v1/wines?after_id={{ after_id if after_id is defined and after_id is integer and after_id >= 0 else 0 }}&limit={{ limit if limit is defined and limit is integer and 1 <= limit <= 100 else 50 }}&missing_image={{ 'true' if missing_image is defined and missing_image == true else 'false' }}
+    method: get
+    headers:
+      X-Wine-API-Key: !secret wine_tracker_api_token
+    timeout: 15
+    verify_ssl: true
+
+  wine_tracker_image:
+    url: >-
+      http://64183197-wine-tracker:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}/image
+    method: post
+    content_type: "application/json; charset=utf-8"
+    headers:
+      X-Wine-API-Key: !secret wine_tracker_api_token
+      Idempotency-Key: "{{ request_id }}"
+    payload: "{{ image | to_json }}"
+    timeout: 45
+    verify_ssl: true
+
   wine_tracker_add:
     url: "http://64183197-wine-tracker:5050/api/v1/wines"
     method: post

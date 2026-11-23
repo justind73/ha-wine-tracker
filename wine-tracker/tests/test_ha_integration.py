@@ -45,7 +45,8 @@ def render(command, data):
     body = env.from_string(command["payload"]).render(data) if "payload" in command else None
     if "content_type" in command:
         headers["Content-Type"] = command["content_type"]
-    return urlsplit(url).path, headers, body
+    parsed = urlsplit(url)
+    return parsed.path + (("?" + parsed.query) if parsed.query else ""), headers, body
 
 
 @pytest.fixture
@@ -111,11 +112,11 @@ def test_ha_package_black_pig_http_roundtrip(package, endpoint, db):
 
 @pytest.mark.parametrize("wine_id", ["../edit/1", "https://evil.invalid/", "1?x=y", 1.5, True, None, -1])
 def test_ha_template_cannot_redirect_credentials(package, wine_id):
-    for action in ("get", "stock", "update"):
+    for action in ("get", "stock", "update", "image"):
         path, headers, body = render(package["rest_command"]["wine_tracker_" + action], {
             "wine_id": wine_id, "request_id": "test-operation-001", "change": {"delta": 1},
-            "changes": {"notes": "Test"}, "url": "https://evil.invalid/", "headers": {"X-Wine-API-Key": "override"}})
-        assert path in ("/api/v1/wines/0", "/api/v1/wines/0/stock")
+            "image": {}, "changes": {"notes": "Test"}, "url": "https://evil.invalid/", "headers": {"X-Wine-API-Key": "override"}})
+        assert path in ("/api/v1/wines/0", "/api/v1/wines/0/stock", "/api/v1/wines/0/image")
         assert headers["X-Wine-API-Key"] == TOKEN
 
 
@@ -174,3 +175,48 @@ def test_production_manifest_retains_ingress_and_private_api_network():
     assert config["environment"]["S6_KEEP_ENV"] == "1"
     assert config["environment"]["DATA_DIR"] == "/share/wine-tracker"
     assert config["map"] == ["share:rw"]
+
+
+def test_ha_image_and_list_http_roundtrip(package, endpoint, db, monkeypatch):
+    import wine_images
+    from .test_images import picture
+    monkeypatch.setattr(wine_images,"download_image",lambda url:(picture(),"image/png",url))
+    def call(name,data):
+        command=package["rest_command"]["wine_tracker_"+name]
+        path,headers,body=render(command,data)
+        assert TOKEN not in json.dumps(data)
+        result=endpoint(command["method"],path,headers=headers,data=body.encode("utf-8") if body else None)
+        assert TOKEN not in result.text
+        return result
+    # One generic order line. A placed order never adds physical stock.
+    wine={"name":"Test cuvee","producer":"Independent producer","year":2022,"bottle_format":0.75,"quantity":0,"price":15}
+    created=call("add",{"request_id":"order-123-line-1-record","wine":wine})
+    assert created.status_code==201
+    wine_id=created.json()["wine"]["id"]
+    assert call("get",{"wine_id":wine_id}).json()["wine"]["quantity"]==0
+    # Always use stock for receipt, including newly created wines. Same key
+    # applies whether the order was first seen before or after delivery.
+    receipt={"wine_id":wine_id,"request_id":"order-123-line-1-received","change":{"delta":6}}
+    assert call("stock",receipt).json()["wine"]["quantity"]==6
+    photo={"wine_id":wine_id,"request_id":"order-123-line-1-photo","image":{
+        "match":{k: wine[k] for k in ("name","producer","year","bottle_format")},
+        "source":{"url":"https://arbitrary.example.org/bottle.png","page_url":"https://arbitrary.example.org/wine",
+                  "rights":{"basis":"license","reference":"Fixture licence allowing copying and resizing"},
+                  "attribution":"Test photographer — example only"}}}
+    result=call("image",photo)
+    assert result.status_code==200 and result.json()["image"]["available"]
+    assert call("image",photo).headers["Idempotency-Replayed"]=="true"
+    assert call("stock",receipt).headers["Idempotency-Replayed"]=="true"
+    current=call("get",{"wine_id":wine_id}).json()
+    assert current["wine"]["quantity"]==6 and current["image"]==result.json()["image"]
+    assert len(call("list",{}).json()["wines"])==1
+    assert call("list",{"missing_image":True}).json()["wines"]==[]
+    assert db.execute("SELECT COUNT(*) FROM timeline WHERE action='restocked'").fetchone()[0]==1
+
+
+@pytest.mark.parametrize("data",[{}, {"after_id":"0&url=https://evil.invalid","limit":"1#x","missing_image":"true"},
+    {"after_id":True,"limit":False,"missing_image":False}])
+def test_list_template_keeps_fixed_destination(package,data):
+    path,headers,body=render(package["rest_command"]["wine_tracker_list"],data)
+    assert path=="/api/v1/wines?after_id=0&limit=50&missing_image=false"
+    assert headers["X-Wine-API-Key"]==TOKEN and body is None

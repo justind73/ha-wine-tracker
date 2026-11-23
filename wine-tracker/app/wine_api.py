@@ -3,14 +3,17 @@
 import hashlib
 import json
 import math
+import os
 import re
 import secrets
 import sqlite3
 import unicodedata
+import uuid
 from datetime import date, datetime
 
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
+from wine_images import ImageError, image_info, prepare_image
 
 
 MAX_BODY = 65536
@@ -156,7 +159,7 @@ def _read_body():
     return data
 
 
-def create_wine_api(get_db, wine_json, get_token, wine_types):
+def create_wine_api(get_db, wine_json, get_token, wine_types, get_upload_dir):
     api = Blueprint("wine_api", __name__, url_prefix="/api/v1")
 
     @api.before_request
@@ -175,6 +178,7 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
         return response
 
     @api.errorhandler(ApiError)
+    @api.errorhandler(ImageError)
     def api_error(error):
         return jsonify(ok=False, error=error.error), error.status
 
@@ -216,6 +220,46 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
         assignments = ", ".join(f"{key}=?" for key in values)
         db.execute(f"UPDATE wines SET {assignments} WHERE id=?", (*values.values(), wine_id))
 
+    def image_target(wine_id, payload):
+        wine = wine_json(wine_id)
+        if wine is None:
+            raise ApiError("not_found", 404)
+        if not set(payload) <= {"source", "match", "replace", "expected_image"}:
+            raise ApiError("unknown_or_readonly_field")
+        match = payload.get("match")
+        if (not isinstance(match, dict) or set(match) != IDENTITY_FIELDS
+                or not isinstance(match.get("name"), str) or not isinstance(match.get("producer"), (str, type(None)))
+                or type(match.get("bottle_format")) not in (int, float)
+                or not 0.01 <= match["bottle_format"] <= 100
+                or (match.get("year") is not None and type(match["year"]) is not int)
+                or _identity(match) != _identity(wine)):
+            raise ApiError("image_wine_mismatch", 409)
+        replace = payload.get("replace", False)
+        if type(replace) is not bool:
+            raise ApiError("invalid_replace")
+        if wine.get("image"):
+            if not replace:
+                raise ApiError("image_already_exists", 409)
+            if payload.get("expected_image") != wine["image"]:
+                raise ApiError("image_changed", 409)
+        elif payload.get("expected_image") is not None:
+            raise ApiError("image_changed", 409)
+        return wine
+
+    def result_for(wine_id):
+        wine = wine_json(wine_id)
+        result = {"ok": True, "wine": wine}
+        if wine and wine.get("image"):
+            result["image"] = image_info(get_upload_dir(), wine["image"])
+        return result
+
+    def replay(receipt, request_hash):
+        if receipt["request_hash"] != request_hash:
+            raise ApiError("idempotency_conflict", 409)
+        response = jsonify(json.loads(receipt["response"]))
+        response.headers["Idempotency-Replayed"] = "true"
+        return response, receipt["status"]
+
     def write(operation, wine_id=None):
         key = request.headers.get("Idempotency-Key", "")
         if not re.fullmatch(r"[A-Za-z0-9_-]{8,128}", key):
@@ -225,18 +269,25 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
         canonical = json.dumps([operation, wine_id, payload], sort_keys=True, ensure_ascii=False)
         request_hash = hashlib.sha256(canonical.encode()).hexdigest()
         db = get_db()
+        prepared_image = None
+        image_file = None
+        committed = False
         try:
+            if operation == "image":
+                receipt = db.execute("SELECT * FROM api_requests WHERE key_hash=?", (key_hash,)).fetchone()
+                if receipt:
+                    return replay(receipt, request_hash)
+                target = image_target(wine_id, payload)
+                # Do network/decoding work outside SQLite's write lock, then
+                # recheck both the receipt and target before changing anything.
+                prepared_image = prepare_image(payload.get("source"), get_upload_dir())
             # Lock before reading: concurrent writers cannot consume the same
             # last bottle or race a duplicate check/idempotency receipt.
             db.execute("BEGIN IMMEDIATE")
             receipt = db.execute("SELECT * FROM api_requests WHERE key_hash=?", (key_hash,)).fetchone()
             if receipt:
-                if receipt["request_hash"] != request_hash:
-                    raise ApiError("idempotency_conflict", 409)
                 db.rollback()
-                response = jsonify(json.loads(receipt["response"]))
-                response.headers["Idempotency-Replayed"] = "true"
-                return response, receipt["status"]
+                return replay(receipt, request_hash)
 
             status = 200
             if operation == "create":
@@ -253,6 +304,18 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
                 status = 201
             elif operation == "update":
                 change_fields(db, wine_id, payload)
+            elif operation == "image":
+                current = image_target(wine_id, payload)
+                if current.get("image") != target.get("image"):
+                    raise ApiError("image_changed", 409)
+                filename = uuid.uuid4().hex + ".jpg"
+                destination = os.path.join(get_upload_dir(), filename)
+                with open(destination, "xb") as handle:
+                    image_file = destination
+                    handle.write(prepared_image)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                db.execute("UPDATE wines SET image=? WHERE id=?", (filename, wine_id))
             else:
                 if not set(payload) <= {"delta", "notes", "notes_mode"}:
                     raise ApiError("unknown_or_readonly_field")
@@ -271,19 +334,29 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
                 db.execute("UPDATE wines SET quantity=? WHERE id=?", (quantity, wine_id))
                 log_stock(db, wine_id, "consumed" if delta < 0 else "restocked", abs(delta))
 
-            result = {"ok": True, "wine": wine_json(wine_id)}
+            result = result_for(wine_id)
             db.execute("INSERT INTO api_requests VALUES (?,?,?,?,?)",
                        (key_hash, request_hash, json.dumps(result, ensure_ascii=False),
                         status, datetime.now().isoformat()))
             db.commit()
+            committed = True
             return jsonify(result), status
         except sqlite3.OperationalError:
             db.rollback()
             # Never return SQL, body, headers or credentials in error output.
             raise ApiError("database_unavailable", 503) from None
+        except OSError:
+            db.rollback()
+            raise ApiError("image_storage_unavailable", 503) from None
         except Exception:
             db.rollback()
             raise
+        finally:
+            if image_file and not committed:
+                try:
+                    os.remove(image_file)
+                except FileNotFoundError:
+                    pass
 
     @api.post("/wines")
     def create():
@@ -294,7 +367,28 @@ def create_wine_api(get_db, wine_json, get_token, wine_types):
         wine = wine_json(wine_id)
         if wine is None:
             raise ApiError("not_found", 404)
-        return jsonify(ok=True, wine=wine)
+        return jsonify(result_for(wine_id))
+
+    @api.get("/wines")
+    def list_wines():
+        if not set(request.args) <= {"after_id", "limit", "missing_image"}:
+            raise ApiError("invalid_query")
+        after, limit = request.args.get("after_id", "0"), request.args.get("limit", "50")
+        missing = request.args.get("missing_image", "false")
+        if (not after.isascii() or not after.isdigit() or len(after) > 10
+                or not limit.isascii() or not limit.isdigit() or len(limit) > 3
+                or not 1 <= int(limit) <= 100 or missing not in ("true", "false")):
+            raise ApiError("invalid_query")
+        clause = " AND (image IS NULL OR image='')" if missing == "true" else ""
+        rows = get_db().execute("SELECT id FROM wines WHERE id>?" + clause + " ORDER BY id LIMIT ?",
+                                (int(after), int(limit) + 1)).fetchall()
+        page = rows[:int(limit)]
+        return jsonify(ok=True, wines=[wine_json(row["id"]) for row in page],
+                       next_after_id=page[-1]["id"] if len(rows) > int(limit) else None)
+
+    @api.post("/wines/<int:wine_id>/image")
+    def attach_image(wine_id):
+        return write("image", wine_id)
 
     @api.patch("/wines/<int:wine_id>")
     def update(wine_id):
