@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Show complete bottle photographs in overview thumbnails using centred,
+  contained images. Preserve card sizes, grid captions, missing-photo
+  placeholders and the existing detail-modal styling.
+
 ## 1.11.0-api.5
 
 - Fit entire bottle photographs inside the wine-detail modal at every screen
