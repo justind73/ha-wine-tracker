@@ -8,6 +8,20 @@ TRANSLATIONS = {
 # DEUTSCH
 # ══════════════════════════════════════════════════════════════════════════════
 "de": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Fotoinformationen",
+    "photo_source": "Quelle",
+    "photo_unknown": "Unbekannt",
+    "photo_product_page": "Originale Produktseite",
+    "photo_rights": "Rechte",
+    "photo_verified": "Bestätigt",
+    "photo_unverified": "Unbestätigt",
+    "photo_unverified_note": "Nutzung im privaten Katalog. Die Erlaubnis zur Bildnutzung wurde nicht bestätigt.",
+    "photo_evidence": "Erlaubnis- oder Lizenznachweis",
+    "photo_attribution": "Urheberangabe",
+    "photo_loading": "Fotoinformationen werden geladen…",
+    "photo_unavailable": "Fotoinformationen konnten nicht geladen werden.",
+
     # Header / navigation
     "app_title": "Wine Tracker",
     "nav_cellar": "Weinkeller",
@@ -395,6 +409,20 @@ TRANSLATIONS = {
 # ENGLISH
 # ══════════════════════════════════════════════════════════════════════════════
 "en": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Photograph information",
+    "photo_source": "Source",
+    "photo_unknown": "Unknown",
+    "photo_product_page": "Original product page",
+    "photo_rights": "Rights",
+    "photo_verified": "Verified",
+    "photo_unverified": "Unverified",
+    "photo_unverified_note": "Private catalogue use. Image reuse permission has not been confirmed.",
+    "photo_evidence": "Permission or licence reference",
+    "photo_attribution": "Attribution",
+    "photo_loading": "Loading photograph information…",
+    "photo_unavailable": "Photograph information could not be loaded.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Wine Cellar",
     "back": "Back",
@@ -770,6 +798,20 @@ TRANSLATIONS = {
 # FRANÇAIS
 # ══════════════════════════════════════════════════════════════════════════════
 "fr": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Informations sur la photo",
+    "photo_source": "Source",
+    "photo_unknown": "Inconnue",
+    "photo_product_page": "Page produit originale",
+    "photo_rights": "Droits",
+    "photo_verified": "Vérifiés",
+    "photo_unverified": "Non vérifiés",
+    "photo_unverified_note": "Usage dans un catalogue privé. L’autorisation de réutiliser l’image n’a pas été confirmée.",
+    "photo_evidence": "Référence de permission ou de licence",
+    "photo_attribution": "Attribution",
+    "photo_loading": "Chargement des informations…",
+    "photo_unavailable": "Impossible de charger les informations de la photo.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Cave à vin",
     "back": "Retour",
@@ -1145,6 +1187,20 @@ TRANSLATIONS = {
 # ITALIANO
 # ══════════════════════════════════════════════════════════════════════════════
 "it": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Informazioni sulla fotografia",
+    "photo_source": "Fonte",
+    "photo_unknown": "Sconosciuta",
+    "photo_product_page": "Pagina originale del prodotto",
+    "photo_rights": "Diritti",
+    "photo_verified": "Verificati",
+    "photo_unverified": "Non verificati",
+    "photo_unverified_note": "Uso in catalogo privato. Il permesso di riutilizzare l’immagine non è stato confermato.",
+    "photo_evidence": "Riferimento del permesso o della licenza",
+    "photo_attribution": "Attribuzione",
+    "photo_loading": "Caricamento informazioni…",
+    "photo_unavailable": "Impossibile caricare le informazioni sulla fotografia.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Cantina",
     "back": "Indietro",
@@ -1520,6 +1576,20 @@ TRANSLATIONS = {
 # ESPAÑOL
 # ══════════════════════════════════════════════════════════════════════════════
 "es": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Información de la fotografía",
+    "photo_source": "Fuente",
+    "photo_unknown": "Desconocida",
+    "photo_product_page": "Página original del producto",
+    "photo_rights": "Derechos",
+    "photo_verified": "Verificados",
+    "photo_unverified": "No verificados",
+    "photo_unverified_note": "Uso en catálogo privado. No se ha confirmado el permiso para reutilizar la imagen.",
+    "photo_evidence": "Referencia del permiso o licencia",
+    "photo_attribution": "Atribución",
+    "photo_loading": "Cargando información…",
+    "photo_unavailable": "No se pudo cargar la información de la fotografía.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Bodega",
     "back": "Volver",
@@ -1895,6 +1965,20 @@ TRANSLATIONS = {
 # PORTUGUÊS
 # ══════════════════════════════════════════════════════════════════════════════
 "pt": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Informações da fotografia",
+    "photo_source": "Fonte",
+    "photo_unknown": "Desconhecida",
+    "photo_product_page": "Página original do produto",
+    "photo_rights": "Direitos",
+    "photo_verified": "Verificados",
+    "photo_unverified": "Não verificados",
+    "photo_unverified_note": "Uso em catálogo privado. A permissão para reutilizar a imagem não foi confirmada.",
+    "photo_evidence": "Referência da permissão ou licença",
+    "photo_attribution": "Atribuição",
+    "photo_loading": "A carregar informações…",
+    "photo_unavailable": "Não foi possível carregar as informações da fotografia.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Adega",
     "back": "Voltar",
@@ -2270,6 +2354,20 @@ TRANSLATIONS = {
 # NEDERLANDS
 # ══════════════════════════════════════════════════════════════════════════════
 "nl": {
+    # Photograph provenance (detail view only)
+    "photo_information": "Foto-informatie",
+    "photo_source": "Bron",
+    "photo_unknown": "Onbekend",
+    "photo_product_page": "Oorspronkelijke productpagina",
+    "photo_rights": "Rechten",
+    "photo_verified": "Geverifieerd",
+    "photo_unverified": "Niet geverifieerd",
+    "photo_unverified_note": "Gebruik in een privécatalogus. Toestemming voor hergebruik van de afbeelding is niet bevestigd.",
+    "photo_evidence": "Verwijzing naar toestemming of licentie",
+    "photo_attribution": "Naamsvermelding",
+    "photo_loading": "Foto-informatie laden…",
+    "photo_unavailable": "Foto-informatie kon niet worden geladen.",
+
     "app_title": "Wine Tracker",
     "nav_cellar": "Wijnkelder",
     "back": "Terug",

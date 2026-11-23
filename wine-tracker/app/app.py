@@ -10,6 +10,7 @@ from datetime import date, datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from wine_api import create_wine_api, init_api_db
+from wine_images import image_info
 from translations import TRANSLATIONS
 from export_import import (
     build_export_zip, export_filename,
@@ -3362,7 +3363,10 @@ def api_get_wine(wine_id):
     wine = db.execute("SELECT * FROM wines WHERE id = ?", (wine_id,)).fetchone()
     if not wine:
         return jsonify({"ok": False, "error": "not found"}), 404
-    return jsonify({"ok": True, "wine": wine_json(wine_id)})
+    result = wine_json(wine_id)
+    if wine["image"]:
+        result["image_info"] = image_info(UPLOAD_DIR, wine["image"])
+    return jsonify({"ok": True, "wine": result})
 
 
 @app.route("/api/summary")

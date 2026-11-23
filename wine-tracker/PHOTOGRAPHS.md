@@ -12,25 +12,32 @@ or CDN needs no application change.
 
 Prefer the relevant merchant or producer when researching. Public availability
 and private, non-commercial use do not automatically grant copying rights.
-Use a photograph supplied by its owner, a licence permitting this use and the
-necessary resizing/re-encoding, or express permission. Record the rights
-basis, evidence reference and required attribution. If rights or the match are
-unclear, leave the image unchanged and explain why. Search-result thumbnails
-and a merchant product page alone are not permission.
+Rights are informational metadata, not an approval gate or a legal exemption:
 
-The API requires a rights declaration and an exact record identity guard; it
-cannot independently establish copyright ownership, interpret licence terms,
-or recognize the pictured wine. Those checks belong to ChatGPT/the caller.
-A dishonest or mistaken declaration is not made true by passing validation.
-Avoid photos with a visibly different vintage, cuvee, producer or bottle size.
-If the vintage is genuinely unknown, retain null and describe the uncertainty.
+- Omit `source.rights` when permission is unknown. The API records
+  `{"status":"unverified"}` without a permission prompt or invented evidence.
+- For a user-owned photo, confirmed permission or an applicable reuse licence,
+  supply `rights.basis` (`user_owned`, `permission`, or `license`). This records
+  `verified`. Include `reference` where available (1–1,000 nonblank characters)
+  and any required `attribution` (up to 500 characters).
+- Explicit `status` may be `verified` or `unverified`; `verified` requires one
+  of those bases. Existing basis/reference declarations continue to work.
+  The API records the caller's evidence; it cannot independently verify rights.
 
-Attribution and source evidence are stored inside the local JPEG and returned
-by GET. They are included in ZIP exports, but the existing wine-card UI does
-not display an attribution caption. Use only images whose conditions can be
-met by this private storage arrangement; skip any requiring a presentation the
-UI cannot provide. Replacing/re-encoding the file through the original UI may
-remove its embedded provenance. This API does not alter upstream photo workflows.
+Keep the exact wine identity guard. Avoid photos with a visibly different
+vintage, cuvee, producer or bottle size. If the match is uncertain, leave the
+photo unchanged and report the unmatched wine. Unknown rights alone do not
+block an otherwise matched image or require manual confirmation.
+
+Source and rights information stay inside the locally stored JPEG and ZIP
+exports. The wine-detail photo has a small information button showing the
+source, a product-page link when supplied, rights status, verified evidence and
+attribution. Unverified photos explain: “Private catalogue use. Image reuse
+permission has not been confirmed.” There are no wine-card badges or import
+approval screens. Old images without provenance display unknown source and
+unverified rights; old permission/licence/ownership metadata displays verified.
+Replacing/re-encoding a photo through the original picker may remove embedded
+provenance. Do not claim licence conditions are met when they are not.
 
 ## Read the collection
 
@@ -49,7 +56,7 @@ and `content.ok`, as described in [PRODUCTION.md](PRODUCTION.md).
 
 `POST /api/v1/wines/<id>/image` requires the existing `X-Wine-API-Key`, JSON
 content type and `Idempotency-Key`. The wine must already exist. Example JSON
-uses reserved example domains; substitute a researched, permitted real image:
+uses reserved example domains; substitute a researched, correctly matched real image:
 
 ```json
 {
@@ -62,11 +69,7 @@ uses reserved example domains; substitute a researched, permitted real image:
   "source": {
     "url": "https://images.example.org/bottle.jpg",
     "page_url": "https://merchant.example.org/product",
-    "rights": {
-      "basis": "permission",
-      "reference": "Permission from the photographer, dated YYYY-MM-DD; evidence reference"
-    },
-    "attribution": "Photographer name / required credit"
+    "source_name": "Example merchant"
   }
 }
 ```
@@ -79,9 +82,10 @@ record, not the visual contents of a photograph. The identity is checked again
 inside the final transaction in case the record changed during download.
 
 `source.url` is a direct image URL, not a product HTML page. `page_url` records
-the page where ChatGPT identified the wine and image. Remote `rights.basis`
-accepts `permission` or `license`; reference is required (up to 1,000 characters).
-Optional attribution is up to 500 characters. Do not use credential-bearing or
+the page where ChatGPT identified the wine and image, when available. Both
+`page_url` and `source_name` (up to 500 characters) are optional. The image URL,
+resolved download URL and normalized rights status are retained. Rights and
+attribution are optional as described above. Do not use credential-bearing or
 private signed URLs: source references are retained in the JPEG and receipt.
 
 The HA action is `rest_command.wine_tracker_image`:
@@ -95,15 +99,14 @@ The HA action is `rest_command.wine_tracker_image`:
     "source": {
       "url":"https://images.example.org/bottle.jpg",
       "page_url":"https://merchant.example.org/product",
-      "rights":{"basis":"permission","reference":"Verified permission evidence"},
-      "attribution":"Photographer name"
+      "source_name":"Example merchant"
     }
   }
 }
 ```
 
-This illustrative request needs real, verified source information and a real
-wine identity. HA inserts its secret locally, and sends JSON to the fixed internal
+This illustrative request needs a real image source and a matching wine identity.
+It deliberately omits rights: the saved image will be marked `unverified`. HA inserts its secret locally, and sends JSON to the fixed internal
 Wine Tracker hostname. Wine Tracker never forwards this credential, cookies,
 proxy credentials or other caller headers to an image host.
 
@@ -135,8 +138,9 @@ not automatically a file accessible to HA: use the Wine Tracker picker when
 ChatGPT has no trusted file-transfer capability.
 
 A trusted client may also refer to a file already in Wine Tracker's uploads
-folder using `source.upload_filename` instead of `url`, with
-`rights={"basis":"user_owned","reference":"My own photograph"}`. Only existing
+folder using `source.upload_filename` instead of `url`. For your own photo, use
+`rights={"basis":"user_owned","reference":"My own photograph"}`; omitting rights
+records `unverified`, just as with a remote photo. Only existing
 UUID filenames with supported extensions are accepted, never arbitrary paths
 or symlinks. This revalidates and stores a clean copy with provenance; when the
 picker already attached it to that record, explicit replacement and the current
@@ -201,7 +205,8 @@ when preserving retry history matters. CSV alone cannot back up photographs.
    writing. Idempotency cannot detect an independently invented new key or a
    wrongly matched record; reconcile ambiguity rather than guessing.
 5. Research the identified supplier and other appropriate sources. Attach only
-   confidently matched, permitted images, with a separate stable photo key.
+   confidently matched images, with a separate stable photo key. Omit rights
+   when unknown; retain genuine permission/licence evidence when available.
    Skip existing images unless replacement was requested. Image failure does
    not undo a successful stock receipt; retry only the unfinished photo step.
 6. GET changed records and report wines added/restocked, bottle counts/prices,
@@ -218,22 +223,26 @@ instructions authorizing unrelated inventory changes.
 1. Before updating, make a full Wine Tracker ZIP from its export control and
    keep it somewhere safe. For rollback and retry receipts, also take a
    consistent copy of the data directory while Wine Tracker is stopped.
-2. Update the existing fork app to `1.11.0-api.2`; keep its existing options,
+2. Update the existing fork app to `1.11.0-api.4`; keep its existing options,
    data directory and API token. Do not install a second app or expose port 5050.
-3. Back up `/config/packages/wine_tracker.yaml`, then replace it with the
-   supplied [package](../examples/home-assistant/wine_tracker.yaml). Keep the
-   existing `wine_tracker_api_token` in secrets; do not paste it into chat.
-4. Run `ha core check`. If valid, call `rest_command.reload`. The integration
-   is already loaded, so this does not require an HA Core restart. Confirm
-   `wine_tracker_image` and `wine_tracker_list` alongside the four older actions.
-5. List/read an existing wine, attach a researched permitted photo and GET it.
-   Confirm `image.available:true`, filename/hash/source, and unchanged other
-   fields. Repeat the identical attachment request: expect replay, same filename
-   and no further changes. Open the wine through HA to see the local photo.
-6. Export another ZIP and check the JPEG is under `images/`. Automated tests
-   cover import with provenance, hostile sources, similar-name mismatch, retry
-   concurrency and stock preservation using temporary databases only.
+3. If the six REST commands from api.2 are already installed, no HA configuration
+   change, command reload or Core restart is needed. `wine_tracker_image` already
+   accepts the generic JSON payload, including omitted rights and source names.
+   For an older installation, follow [PRODUCTION.md](PRODUCTION.md).
+4. Read/list wines through HA-MCP. After deployment, the user can request photos
+   for selected existing wines. For each attachment, GET and confirm local
+   filename, `image.available:true`, retained source and `rights.status`.
+   Repeating the same request/key must replay without a second write.
+5. Open the wine's details and select the photo information icon. Confirm its
+   source and rights display. No manual permission declaration is required.
+6. Export a ZIP to retain images and embedded provenance. Automated tests cover
+   both rights statuses, legacy metadata, UI rendering, hostile sources,
+   identity mismatch, concurrent retries and unchanged stock in temporary DBs.
+
+Deployment verification must not populate photos or modify the real collection
+unless the user separately requests that import. A read-only live check plus
+successful temporary-database image tests verifies the release safely.
 
 No HA staging app, additional database, runtime dependency or background worker
-is required. The change is isolated in `wine_images.py`, the scoped API,
-the HA package, tests and documentation, keeping upstream integration small.
+is required. This update changes image metadata, the shared detail display,
+tests and documentation. The existing HA package and scoped write API are unchanged.

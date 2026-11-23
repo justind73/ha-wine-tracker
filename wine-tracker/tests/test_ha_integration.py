@@ -177,7 +177,8 @@ def test_production_manifest_retains_ingress_and_private_api_network():
     assert config["map"] == ["share:rw"]
 
 
-def test_ha_image_and_list_http_roundtrip(package, endpoint, db, monkeypatch):
+@pytest.mark.parametrize("verified", [True, False])
+def test_ha_image_and_list_http_roundtrip(package, endpoint, db, monkeypatch, verified):
     import wine_images
     from .test_images import picture
     monkeypatch.setattr(wine_images,"download_image",lambda url:(picture(),"image/png",url))
@@ -203,8 +204,11 @@ def test_ha_image_and_list_http_roundtrip(package, endpoint, db, monkeypatch):
         "source":{"url":"https://arbitrary.example.org/bottle.png","page_url":"https://arbitrary.example.org/wine",
                   "rights":{"basis":"license","reference":"Fixture licence allowing copying and resizing"},
                   "attribution":"Test photographer — example only"}}}
+    if not verified:
+        photo["image"]["source"].pop("rights")
     result=call("image",photo)
     assert result.status_code==200 and result.json()["image"]["available"]
+    assert result.json()["image"]["source"]["rights"]["status"] == ("verified" if verified else "unverified")
     assert call("image",photo).headers["Idempotency-Replayed"]=="true"
     assert call("stock",receipt).headers["Idempotency-Replayed"]=="true"
     current=call("get",{"wine_id":wine_id}).json()

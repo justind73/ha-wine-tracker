@@ -183,29 +183,41 @@ def encode_image(data, mime, provenance):
         raise ImageError("invalid_image") from None
 
 
+def normalize_rights(rights):
+    """Accept legacy declarations; missing evidence never implies permission."""
+    if rights is None:
+        return {"status": "unverified"}
+    if not isinstance(rights, dict) or not set(rights) <= {"status", "basis", "reference"}:
+        raise ImageError("invalid_image_rights")
+    basis = rights.get("basis")
+    if basis is not None and basis not in ("permission", "license", "user_owned"):
+        raise ImageError("invalid_image_rights")
+    status = rights.get("status", "verified" if basis else "unverified")
+    if status not in ("verified", "unverified") or (status == "verified" and not basis):
+        raise ImageError("invalid_image_rights")
+    if "reference" in rights and (not isinstance(rights["reference"], str)
+                                  or not 1 <= len(rights["reference"].strip()) <= 1000):
+        raise ImageError("invalid_image_rights")
+    return {**rights, "status": status}
+
+
 def prepare_image(source, directory):
-    if not isinstance(source, dict) or not set(source) <= {"url", "upload_filename", "page_url", "rights", "attribution"}:
+    if not isinstance(source, dict) or not set(source) <= {
+            "url", "upload_filename", "page_url", "source_name", "rights", "attribution"}:
         raise ImageError("invalid_image_source")
     if ("url" in source) == ("upload_filename" in source):
         raise ImageError("image_source_required")
-    rights = source.get("rights")
-    if (not isinstance(rights, dict) or set(rights) != {"basis", "reference"}
-            or rights.get("basis") not in ("permission", "license", "user_owned")
-            or not isinstance(rights.get("reference"), str) or not 1 <= len(rights["reference"].strip()) <= 1000):
-        raise ImageError("image_permission_required")
-    if not isinstance(source.get("attribution", ""), str) or len(source.get("attribution", "")) > 500:
-        raise ImageError("invalid_attribution")
+    rights = normalize_rights(source.get("rights"))
+    for field in ("attribution", "source_name"):
+        if not isinstance(source.get(field, ""), str) or len(source.get(field, "")) > 500:
+            raise ImageError("invalid_" + field)
     if "page_url" in source:
         https_url(source["page_url"])
-    provenance = dict(source)
+    provenance = {**source, "rights": rights}
     if "url" in source:
-        if not source.get("page_url") or rights["basis"] == "user_owned":
-            raise ImageError("image_source_page_required")
         data, mime, final_url = download_image(source["url"])
         provenance["resolved_url"] = final_url
     else:
-        if rights["basis"] != "user_owned":
-            raise ImageError("image_permission_required")
         path = upload_path(directory, source["upload_filename"])
         with path.open("rb") as handle:
             data = handle.read(MAX_BYTES + 1)
@@ -225,6 +237,14 @@ def image_info(directory, filename):
             comment = image.info.get("comment", b"")
             source = (json.loads(comment[len(COMMENT_PREFIX):])
                       if isinstance(comment, bytes) and comment.startswith(COMMENT_PREFIX) else None)
+            if isinstance(source, dict):
+                # Read old JPEG provenance without rewriting the file or ZIPs.
+                try:
+                    source["rights"] = normalize_rights(source.get("rights"))
+                except ImageError:
+                    source["rights"] = {"status": "unverified"}
+            else:
+                source = None
             return {"filename": filename, "available": True, "sha256": hashlib.sha256(data).hexdigest(),
                     "width": image.width, "height": image.height, "source": source}
     except (ImageError, OSError, ValueError, Image.DecompressionBombError):

@@ -71,14 +71,22 @@ def test_image_routes_disabled_and_readonly(client, enabled, monkeypatch):
     assert attach(client,{}).status_code == 403
 
 
-def test_attach_replay_preservation_and_backup(client, db, enabled, payload, remote, upload_dir, tmp_path):
+@pytest.mark.parametrize("verified", [True, False])
+def test_attach_replay_preservation_and_backup(client, db, enabled, payload, remote, upload_dir, tmp_path, verified):
+    if not verified:
+        payload["source"].pop("rights")
+    payload["source"]["source_name"] = "Independent merchant"
     before = snapshot(db)
     response = attach(client,payload)
     assert response.status_code == 200, response.json
     wine, info = response.json["wine"], response.json["image"]
     stored = Path(upload_dir, wine["image"]).read_bytes()
     assert info["available"] and info["sha256"] == hashlib.sha256(stored).hexdigest()
-    assert info["source"]["rights"] == payload["source"]["rights"]
+    expected_rights = {**payload["source"]["rights"], "status": "verified"} if verified else {"status": "unverified"}
+    assert info["source"]["rights"] == expected_rights
+    for field in ("url", "page_url", "source_name", "attribution"):
+        assert info["source"][field] == payload["source"][field]
+    assert client.get("/api/wine/1").json["wine"]["image_info"] == info
     assert info["source"]["resolved_url"] == "https://cdn.example.org/bottle.png"
     original = client.get(BASE+"/1",headers=headers()).json
     assert original == response.json
@@ -115,7 +123,7 @@ def test_incorrect_match_never_fetches(client, db, enabled, payload, remote, fie
     assert not remote and snapshot(db) == before
 
 
-@pytest.mark.parametrize("source", [{}, {"url":"https://example.org/a.png"},
+@pytest.mark.parametrize("source", [{}, {"url":"https://example.org/a.png","rights":{"status":"verified"}},
     {"url":"https://example.org/a.png","rights":{"basis":"private_use","reference":"personal"}},
     {"url":"https://example.org/a.png","rights":{"basis":"license","reference":" "}},
     {"upload_filename":"../../secrets.yaml","rights":{"basis":"user_owned","reference":"my photo"}}])
@@ -195,6 +203,67 @@ def test_owned_upload_and_legacy_comment(client,enabled,payload,upload_dir):
     payload["source"]={"upload_filename":filename,"rights":{"basis":"user_owned","reference":"My own photograph"}}
     response=attach(client,payload)
     assert response.status_code==200 and response.json["image"]["source"]["rights"]["basis"]=="user_owned"
+
+
+@pytest.mark.parametrize("rights,expected", [
+    (None, {"status": "unverified"}), ({}, {"status": "unverified"}),
+    ({"status": "unverified"}, {"status": "unverified"}),
+    ({"basis": "user_owned"}, {"basis": "user_owned", "status": "verified"}),
+    ({"status": "verified", "basis": "license", "reference": "CC BY 4.0"},
+     {"status": "verified", "basis": "license", "reference": "CC BY 4.0"}),
+])
+def test_optional_rights_and_product_page(client, enabled, payload, remote, rights, expected):
+    payload["source"] = {"url": "https://independent.example.org/bottle.png"}
+    if rights is not None:
+        payload["source"]["rights"] = rights
+    response = attach(client, payload)
+    assert response.status_code == 200
+    assert response.json["image"]["source"]["rights"] == expected
+    assert response.json["image"]["source"]["url"] == payload["source"]["url"]
+
+
+@pytest.mark.parametrize("rights", [[], "permission", {"status": "legal"},
+    {"status": "verified"}, {"basis": "private_use"}, {"reference": 123},
+    {"reference": "x" * 1001}, {"unknown": True}])
+def test_malformed_rights_still_rejected(client, db, enabled, payload, remote, rights):
+    payload["source"]["rights"] = rights
+    before = snapshot(db)
+    assert attach(client, payload).json["error"] == "invalid_image_rights"
+    assert not remote and snapshot(db) == before
+
+
+@pytest.mark.parametrize("field,value", [("source_name", "x" * 501), ("source_name", []),
+    ("page_url", "javascript:alert(1)"), ("page_url", "https://localhost/private")])
+def test_source_metadata_validation(client, db, enabled, payload, remote, field, value):
+    payload["source"].pop("rights")
+    payload["source"][field] = value
+    before = snapshot(db)
+    assert attach(client, payload).status_code == 400
+    assert not remote and snapshot(db) == before
+
+
+@pytest.mark.parametrize("basis", ["permission", "license", "user_owned"])
+def test_legacy_rights_read_without_rewriting(client, db, sample_wine, upload_dir, basis):
+    filename = "c" * 32 + ".jpg"
+    old = {"url": "https://example.org/bottle.jpg",
+           "rights": {"basis": basis, "reference": "Original evidence"}}
+    data = images.encode_image(picture(), "image/png", old)
+    path = Path(upload_dir, filename)
+    path.write_bytes(data)
+    db.execute("UPDATE wines SET image=? WHERE id=1", (filename,))
+    db.commit()
+    source = client.get("/api/wine/1").json["wine"]["image_info"]["source"]
+    assert source == {**old, "rights": {**old["rights"], "status": "verified"}}
+    assert path.read_bytes() == data
+
+
+@pytest.mark.parametrize("source", [None, [], {"rights": "old unstructured note"}])
+def test_unstructured_old_metadata_is_not_verified(upload_dir, source):
+    filename = "d" * 32 + ".jpg"
+    Path(upload_dir, filename).write_bytes(images.encode_image(picture(), "image/png", source))
+    info = images.image_info(upload_dir, filename)
+    assert info["available"]
+    assert not info["source"] or info["source"]["rights"]["status"] == "unverified"
 
 
 @pytest.mark.parametrize("value", ["http://example.org/a", "https://127.0.0.1/a", "https://[::1]/a",
