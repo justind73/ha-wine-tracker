@@ -26,6 +26,10 @@ edit or delete wines straight from the chat.
 
 ## Features
 
+For the optional authenticated JSON write API, see the
+[API setup and examples](API.md).
+It is disabled by default and requires a separate API credential.
+
 - **Wine cards** with photo, vintage, type, region, grape variety, rating and notes
 - **AI wine label recognition** fills in all fields, including maturity phases, taste profile and food pairings (Anthropic, OpenAI, OpenRouter, Ollama, MiniMax, Mistral)
 - **AI sommelier chat with full cellar CRUD** - ask about your cellar, upload label photos, and add, edit or delete wines from the conversation; sessions persist

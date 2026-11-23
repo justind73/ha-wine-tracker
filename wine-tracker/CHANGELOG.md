@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add an opt-in, token-authenticated JSON API for creating wines, adjusting
+  stock and updating selected details or appending notes. Writes use durable
+  idempotency receipts and atomic timeline updates. Includes validation,
+  temporary-database tests and Home Assistant MCP documentation.
+
 ## 1.11.0
 
 - **Out-of-stock wines stay visible** - wines that drop to zero bottles no longer vanish from the cellar. They now show an "Empty" ribbon, and a new persistent "Show empty bottles" toggle in Settings remembers your choice across sessions (the existing quick-toggle in the filter bar still works as a temporary shortcut). Thanks @rogercrocha for the contribution.

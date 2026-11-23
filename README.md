@@ -292,6 +292,14 @@ sensor:
 
 This creates a `sensor.wine_stock` entity for dashboards and automations.
 
+### Authenticated machine API
+
+An optional JSON API supports creating wines, consuming/restocking bottles and
+updating selected details or appending tasting notes. It requires a separately
+configured `wine_api_token` (`WINE_API_TOKEN` in Docker) and a retry key for every
+write. It is disabled by default. See [API documentation](wine-tracker/API.md)
+for setup, security boundaries, request examples and Home Assistant MCP usage.
+
 ## Development
 
 Run the app straight from the checkout:
