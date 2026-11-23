@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.0-api.4
+
+- Accept photographs without a rights declaration and record them as unverified.
+  Preserve verified evidence and optional source names/product pages in local images.
+- Add discreet photograph information in wine details; retain legacy metadata and
+  all existing authentication, download, identity, retry and backup safeguards.
+
 ## 1.11.0-api.3
 
 - Show the original Wine Tracker version and our custom build separately in

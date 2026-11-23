@@ -505,9 +505,9 @@ function openViewModal(id, wine) {
     ribbonHtml = '<span class="ribbon ribbon-' + escapeHtml(w.type.toLowerCase().replace(/[éö]/g, function(c){return c==='é'?'e':'oe';})) + '">' + escapeHtml(typeLabel) + '</span>';
   }
   if (w.image) {
-    html += '<div class="view-photo-panel" tabindex="0" role="button" onclick="openLightbox(\'' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '\')">'
+    html += '<div class="view-photo-panel">'
           + ribbonHtml
-          + '<img src="' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '" alt="' + escapeHtml(w.name) + '">'
+          + '<img tabindex="0" role="button" onclick="openLightbox(\'' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '\')" src="' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '" alt="' + escapeHtml(w.name) + '">'
           + '</div>';
   } else if (ribbonHtml) {
     html += '<div class="view-photo-panel view-no-image">' + ribbonHtml + '</div>';
@@ -567,6 +567,7 @@ function openViewModal(id, wine) {
   html += '</div>';
 
   document.getElementById('viewModalBody').innerHTML = html;
+  addPhotoInformation(id, w);
   openModal('viewModal');
 }
 
