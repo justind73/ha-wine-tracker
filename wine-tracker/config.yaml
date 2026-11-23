@@ -1,8 +1,8 @@
 name: "Wine Tracker"
 description: "Track and manage your wine cellar"
-version: "1.11.0"
+version: "1.11.0-api.1"
 slug: "wine_tracker"
-url: "https://github.com/xenofex7/ha-wine-tracker"
+url: "https://github.com/justind73/ha-wine-tracker"
 init: false
 arch:
   - aarch64
@@ -12,15 +12,17 @@ arch:
   - i386
 startup: application
 boot: auto
-ports:
-  5050/tcp: 5050
-ports_description:
-  5050/tcp: "Wine Tracker Web UI"
+ports: {}
+environment:
+  S6_KEEP_ENV: "1"
+  HA_INGRESS_ONLY: "true"
+  DATA_DIR: "/share/wine-tracker"
 ingress: true
 ingress_port: 5050
 panel_icon: mdi:bottle-wine
 panel_title: "Wine Tracker"
 options:
+  wine_api_token: ""
   currency: "CHF"
   language: "de"
   ai_provider: "none"
@@ -38,6 +40,7 @@ options:
   mistral_model: "mistral-medium-latest"
   chat_model: ""
 schema:
+  wine_api_token: password?
   currency: str
   language: str
   ai_provider: list(none|anthropic|openai|openrouter|ollama|minimax|mistral)

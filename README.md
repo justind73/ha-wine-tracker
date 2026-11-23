@@ -292,6 +292,17 @@ sensor:
 
 This creates a `sensor.wine_stock` entity for dashboards and automations.
 
+### Authenticated machine API
+
+An optional JSON API supports creating wines, consuming/restocking bottles and
+updating selected details or appending tasting notes. It requires a separately
+configured `wine_api_token` (`WINE_API_TOKEN` in Docker) and a retry key for every
+write. It is disabled by default. See [API documentation](wine-tracker/API.md)
+for setup, security boundaries, request examples and Home Assistant MCP usage.
+The [production integration guide](wine-tracker/PRODUCTION.md) provides native
+HA REST commands with locally held secrets. This fork's HA app uses authenticated
+Ingress for the UI and publishes no LAN port; machine requests use the scoped API.
+
 ## Development
 
 Run the app straight from the checkout:
@@ -309,6 +320,7 @@ lands in `wine-tracker/app/data/`.
 Every feature and every bugfix ships with tests:
 
 ```bash
+pip install -r wine-tracker/requirements-test.txt
 cd wine-tracker && pytest tests/ -v
 ```
 
