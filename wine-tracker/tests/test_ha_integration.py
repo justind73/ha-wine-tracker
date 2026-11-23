@@ -153,7 +153,7 @@ def test_staging_archive_is_isolated_and_reproducible():
         assert config["map"] == [] and config["ports"] == {}
         assert config["ingress"] is False and config["host_network"] is False
         assert config["boot"] == "manual"
-        assert config["environment"] == {"AUTH_ENABLED": "true", "USERS": "", "DEV_AUTH": "",
+        assert config["environment"] == {"S6_KEEP_ENV": "1", "AUTH_ENABLED": "true", "USERS": "", "DEV_AUTH": "",
                                          "DATA_DIR": "/data/wine-tracker-api-staging"}
         assert config["options"]["wine_api_token"] == ""
         manifest = json.loads(archive.read(prefix + "SOURCE.json"))

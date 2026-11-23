@@ -1,6 +1,6 @@
 # HA-MCP integration and isolated staging review
 
-Prepared for PR #1. Nothing in this guide has been installed on Home Assistant.
+Prepared for PR #1. Staging installation was subsequently authorized separately.
 The existing app and `/share/wine-tracker/` must remain untouched during staging.
 
 ## Recommendation
@@ -83,6 +83,7 @@ The source packager creates a separate local app, not a replacement release.
 | Published ports | none (`ports: {}`) | No new LAN port 5050 or 5051 |
 | Ingress | false | API-only review app; no browser panel |
 | Legacy login | `AUTH_ENABLED=true`, `USERS=""`, `DEV_AUTH=""` | No legacy write access and no browser accounts |
+| Container environment | `S6_KEEP_ENV=1` | Retains authentication and storage settings when s6 starts Python |
 | AI | none | No provider credentials or enrichment calls |
 | Start on boot | manual | Starts only when explicitly requested |
 
@@ -125,14 +126,16 @@ source preparation, not a claim of bit-identical future container images.
 
 ## 2. Install only the staging app, when separately authorized
 
-These are future installation steps, not actions performed by this PR review.
+These steps require installation authorization separately from the PR review.
 
 1. Extract the ZIP on your computer. It contains one folder named
    `wine_tracker_api_staging`.
 2. Using your existing authorized Samba/SSH/VS Code access, copy that folder to
-   HA's `/addons/`. For Samba installations exposing the addons share, this is
+   HA's local-app directory. Terminal & SSH 10.6.0 exposes it as `/local_apps/`
+   (also `/root/local_apps`); older tools may expose `/addons/`. Check the mount
+   before copying: do not create an unmounted `/addons` directory. For Samba installations exposing the addons share, this is
    `\\homeassistant\addons` in Windows File Explorer. The final file must be
-   `/addons/wine_tracker_api_staging/config.json`, not inside a second nested
+   `/local_apps/wine_tracker_api_staging/config.json` for that SSH app, not inside a second nested
    folder. If the folder already exists, stop and check which staging revision
    it contains; do not overwrite an unknown installation.
 3. In **Settings → Apps → App store**, use **Check for updates** (sometimes in
@@ -142,15 +145,30 @@ These are future installation steps, not actions performed by this PR review.
 4. Verify the app name, version suffix against `SOURCE.json`, no published
    ports, and Start on boot off. Do not add a port mapping or turn off
    protection mode. This package supports amd64 and aarch64.
-5. Generate a token in a **local terminal you control**, not an assistant tool:
+5. Generate a token in a **local terminal you control**, without sending its value to an assistant:
    `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
    Keep it private. In staging **Configuration**, set `wine_api_token` to it
    and save. Do not send the value to ChatGPT.
+   An authorized deployment script may instead generate and configure it entirely
+   on HA, with private files and no secret values in tool arguments or output.
 6. Start **Wine Tracker API Staging** only. It creates a fresh database at
    `/data/wine-tracker-api-staging/wine.db` within its own container storage.
    Leave the existing Wine Tracker app running unchanged. There is no staging
    web UI to open. A missing `SECRET_KEY` session warning is harmless here:
    there are no browser accounts or persistent login sessions in staging.
+7. Before creating any test records, verify unauthenticated requests to both
+   `/api/v1/wines/1` and `/api/summary` return **401** from the actual container.
+   If either does not, stop staging and investigate. A successful API-key check
+   alone does not prove that legacy routes are protected.
+
+The first real container check found that s6 discarded `AUTH_ENABLED` and
+`DATA_DIR` before starting Python, even though they were present in the app
+manifest. Local Flask tests cannot reproduce that container startup behavior.
+The staging manifest now sets `S6_KEEP_ENV=1`, the documented
+[s6 environment preservation setting](https://github.com/just-containers/s6-overlay#customizing-s6-overlay-behaviour).
+This change is confined to staging packaging; runtime authentication checks
+remain mandatory. No host `/share` mount was present in the original staging
+attempt, and no test wines were created before that check failed.
 
 Do not import your live backup, mount `/share`, copy `wine.db`, use the existing
 dev app as a shortcut, run release/deploy scripts or change the live app's

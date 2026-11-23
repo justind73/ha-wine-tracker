@@ -56,6 +56,9 @@ def build_archive(repo, revision):
         "ports": {},
         "map": [],
         "environment": {
+            # HA's s6 base resets CMD's environment unless explicitly retained.
+            # Without this, AUTH_ENABLED and DATA_DIR silently use app defaults.
+            "S6_KEEP_ENV": "1",
             "DATA_DIR": "/data/wine-tracker-api-staging",
             "AUTH_ENABLED": "true",
             "USERS": "",
