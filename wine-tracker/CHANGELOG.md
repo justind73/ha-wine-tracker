@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.11.0-api.6
 
 - Show complete bottle photographs in overview thumbnails using centred,
   contained images. Preserve card sizes, grid captions, missing-photo
