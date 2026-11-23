@@ -9,6 +9,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
+from wine_api import create_wine_api, init_api_db
 from translations import TRANSLATIONS
 from export_import import (
     build_export_zip, export_filename,
@@ -80,6 +81,7 @@ AI_SETTING_KEYS = {
 def load_options():
     """Read HA add-on options with sensible defaults."""
     defaults = {
+        "wine_api_token": "",
         "currency": "CHF",
         "language": "de",
         "chat_model": "",
@@ -108,6 +110,7 @@ def load_options():
 
     # ENV variables override options.json (for standalone Docker deployment)
     env_map = {
+        "WINE_API_TOKEN": "wine_api_token",
         "CURRENCY": "currency",
         "LANGUAGE": "language",
         "AI_PROVIDER": "ai_provider",
@@ -127,7 +130,7 @@ def load_options():
     }
     for env_key, opt_key in env_map.items():
         val = os.environ.get(env_key)
-        if val:
+        if val or (env_key == "WINE_API_TOKEN" and val is not None):
             defaults[opt_key] = val
             if opt_key == "ai_provider":
                 provider_explicit = True
@@ -401,6 +404,9 @@ def set_ingress_path():
 @app.before_request
 def check_auth():
     """Enforce login when AUTH_ENABLED=true (standalone Docker deployment)."""
+    # Only this blueprint has mandatory, independent machine authentication.
+    if request.blueprint == "wine_api":
+        return
     if not AUTH_ENABLED:
         return
     if request.endpoint in ("login", "static", "uploaded_file"):
@@ -418,7 +424,7 @@ def check_readonly():
         return
     if session.get("role") != "readonly":
         return
-    if request.method in ("POST", "PUT", "DELETE"):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         # Allow login POST, chat API, chat sessions for readonly users
         # (session delete is blocked in the endpoint itself)
         allowed = {"login", "api_chat", "api_chat_sessions_list", "api_chat_session_detail", "api_prefs_save"}
@@ -534,6 +540,7 @@ def close_db(e=None):
 
 def init_db():
     with sqlite3.connect(DB_PATH) as db:
+        init_api_db(db)
         db.execute("""
             CREATE TABLE IF NOT EXISTS wines (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -3358,6 +3365,11 @@ def api_summary():
     ).fetchall()
     total = db.execute("SELECT SUM(quantity) FROM wines WHERE quantity > 0").fetchone()[0] or 0
     return jsonify({"total_bottles": total, "by_type": [dict(r) for r in rows]})
+
+
+app.register_blueprint(create_wine_api(
+    get_db, wine_json, lambda: HA_OPTIONS.get("wine_api_token", ""), WINE_TYPES,
+))
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
