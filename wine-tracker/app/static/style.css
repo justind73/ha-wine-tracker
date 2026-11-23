@@ -1334,43 +1334,24 @@ html[data-theme="homeassistant"]:not(.light) .toggle-slider { background: #76767
     gap: 2.5rem;
     align-items: start;
   }
-  .view-photo-panel {
-    order: 2;
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-  }
-  .view-photo-panel img {
-    flex: 1;
-    width: 100%;
-    height: auto;
-    min-height: 360px;
-    object-fit: contain;
-    object-position: center;
-    border-radius: var(--radius);
-    cursor: pointer;
-  }
+  .view-photo-panel { order: 2; }
   .view-fields-panel { order: 1; }
 }
 
 .view-photo-panel {
-  width: 100%; max-height: 600px; overflow: hidden;
-  border-radius: var(--radius); cursor: pointer;
+  position: relative; width: 100%; flex-shrink: 0;
+  border-radius: var(--radius); overflow: hidden;
   margin-bottom: .5rem;
 }
 .view-photo-panel img {
-  width: 100%; height: 100%; object-fit: cover;
-  border-radius: var(--radius);
+  display: block; width: 100%; height: auto; max-height: min(600px, 65vh);
+  object-fit: contain; object-position: center;
+  border-radius: var(--radius); cursor: pointer;
 }
 
 .view-name {
   font-size: 1.25rem; font-weight: 700; color: var(--text);
   margin-bottom: .25rem;
-}
-
-.view-photo-panel {
-  position: relative;
-  overflow: hidden;
 }
 
 .view-meta {
