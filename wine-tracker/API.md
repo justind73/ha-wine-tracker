@@ -1,9 +1,11 @@
 # Machine JSON API
 
-The `/api/v1` API creates wines, adjusts stock and updates selected details.
+The `/api/v1` API lists/creates wines, adjusts stock, updates selected details
+and attaches photographs selected by the caller.
 It is disabled until a separate credential is configured. The HA app retains
 its UI and legacy routes behind authenticated Home Assistant Ingress.
-No images are downloaded and no AI or Vivino requests are made by these routes.
+Only the image endpoint fetches caller-selected photographs. No AI, merchant
+search or Vivino requests are made by these routes.
 
 ## Enable and authenticate
 
@@ -28,7 +30,7 @@ set it to an empty value and restart to disable access.
 
 This single credential is scoped to creating, reading and editing wine records
 and adjusting stock through `/api/v1`. It does not grant standalone login,
-settings access, deletion, imports, image management, chat, or other legacy
+settings access, deletion, imports, chat, or other legacy
 API access. It is not restricted to individual wines. In standalone mode these
 routes use the token independently of browser login; a supplied readonly
 browser session still cannot write. Browser login or ingress headers alone
@@ -51,6 +53,8 @@ is enabled. Rate limiting, if needed, belongs at the trusted proxy boundary.
 
 | Method | Path | Purpose | Success |
 | --- | --- | --- | --- |
+| GET | `/api/v1/wines` | Paginated collection, optional missing-image filter | 200 |
+| POST | `/api/v1/wines/<id>/image` | Attach a validated local photograph | 200 |
 | POST | `/api/v1/wines` | Create a record | 201 |
 | GET | `/api/v1/wines/<id>` | Read the full record using the API token | 200 |
 | PATCH | `/api/v1/wines/<id>` | Update only supplied fields | 200 |
@@ -240,7 +244,7 @@ Errors have the shape `{"ok": false, "error": "stock_out_of_range"}`.
 ## Home Assistant MCP
 
 Use Home Assistant's native `rest_command` integration with the credential
-held in `secrets.yaml`. HA-MCP calls four fixed HA actions using ordinary wine
+held in `secrets.yaml`. HA-MCP calls six fixed HA actions using ordinary wine
 data and an idempotency key; Home Assistant inserts the secret locally. The
 assistant does not receive it or pass it in tool arguments.
 
@@ -248,7 +252,7 @@ See [the production installation guide](PRODUCTION.md) for
 the complete configuration, beginner-friendly installation steps, logging
 controls, network/authentication boundaries and the Black Pig end-to-end test.
 The [ready-to-copy package](../examples/home-assistant/wine_tracker.yaml)
-targets the production app installed from the fork and includes add, stock, update and GET.
+targets the production app installed from the fork and includes add, stock, update, GET, list and image.
 Use `ha_call_service` with `return_response: true` and inspect both
 `service_response.status` and `service_response.content.ok`.
 
@@ -266,6 +270,7 @@ databases, including the illustrative ID 25 fixture; they do not contact a live
 cellar. No runtime dependencies were added; YAML integration tests use PyYAML.
 `wine-tracker-dev/` is a generated release copy refreshed by
 `scripts/sync-dev-addon.sh`; this source change does not run
-the upstream dev release workflow. The fork's HA release is `1.11.0-api.1`.
+the upstream dev release workflow. The fork's HA release is `1.11.0-api.2`.
 
-Photographs are a separate proposal in [API_PHOTOS_PROPOSAL.md](API_PHOTOS_PROPOSAL.md).
+The [photograph guide](PHOTOGRAPHS.md) documents the image/list contracts,
+source and rights validation, local storage and supplier-independent order workflow.

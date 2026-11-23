@@ -3376,6 +3376,7 @@ def api_summary():
 
 app.register_blueprint(create_wine_api(
     get_db, wine_json, lambda: HA_OPTIONS.get("wine_api_token", ""), WINE_TYPES,
+    lambda: UPLOAD_DIR,
 ))
 
 

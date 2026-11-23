@@ -2,7 +2,7 @@
 
 This fork retains the upstream UI and cellar format, adds the scoped JSON API,
 and protects browser routes with Home Assistant Ingress. The HA release is
-`1.11.0-api.1`; the application UI retains the upstream `1.11.0` version string.
+`1.11.0-api.2`; the application UI retains the upstream `1.11.0` version string.
 
 ## Installation and data
 
@@ -19,7 +19,8 @@ starting this one: never run two app instances against that database. Preserving
 the database in place retains record IDs, notes, drinking windows, history,
 settings and API retry receipts. The API adds one receipts table and does not
 replace or rewrite the wine/timeline schema. Existing photos and UI workflows
-remain available; machine photo attachment is still a separate feature proposal.
+remain available; machine photo attachment stores validated local files with embedded provenance;
+see [Photographs and supplier orders](PHOTOGRAPHS.md).
 
 Before switching apps, export a complete ZIP and verify it with both ZIP CRC
 checks and Wine Tracker's own import parser. Check records, total quantity,
@@ -51,7 +52,7 @@ This follows the [official ingress peer-validation guidance](https://contributor
 Standalone Docker deployments keep the upstream `AUTH_ENABLED` login mechanism;
 the HA-specific ingress restriction is opt-in outside this HA app manifest.
 
-## The four production commands
+## The six production commands
 
 Copy [wine_tracker.yaml](../examples/home-assistant/wine_tracker.yaml) into
 `/config/packages/wine_tracker.yaml`. The user's configuration already includes
@@ -76,6 +77,8 @@ can expose resolved request headers.
 | `rest_command.wine_tracker_add` | `request_id`, `wine` object | `POST /api/v1/wines` |
 | `rest_command.wine_tracker_stock` | `request_id`, integer `wine_id`, `change` object | `POST /api/v1/wines/<id>/stock` |
 | `rest_command.wine_tracker_update` | `request_id`, integer `wine_id`, `changes` object | `PATCH /api/v1/wines/<id>` |
+| `rest_command.wine_tracker_list` | optional `after_id`, `limit`, `missing_image` | `GET /api/v1/wines` |
+| `rest_command.wine_tracker_image` | `request_id`, integer `wine_id`, `image` object | `POST /api/v1/wines/<id>/image` |
 | `rest_command.wine_tracker_get` | integer `wine_id` | `GET /api/v1/wines/<id>` |
 
 HA-MCP calls use `domain="rest_command"`, the service name without its domain,
@@ -93,7 +96,7 @@ movement is needed solely to test deployment.
 
 Run `ha core check` before applying package edits. Because `rest_command` is
 already loaded, `rest_command.reload` can replace its actions without restarting
-HA Core. Check that exactly the four production Wine Tracker actions remain.
+HA Core. Check that exactly the six production Wine Tracker actions remain.
 
 ## Verification and rollback
 
@@ -113,7 +116,7 @@ after successful verification, retaining recovery backups separately.
 
 Keep upstream as `https://github.com/xenofex7/ha-wine-tracker`. Future releases
 can be merged into the fork with Git; conflicts are most likely in `app.py`,
-the HA manifest/version and documentation. The API is isolated in `wine_api.py`
+the HA manifest/version and documentation. The API is isolated in `wine_api.py` and `wine_images.py`
 and uses existing SQLite/image/UI structures. Preserve the small ingress guard,
 no-host-port policy, s6 environment setting and API registration when resolving
 conflicts. Merge upstream, resolve any conflicts, run the full tests, increment
