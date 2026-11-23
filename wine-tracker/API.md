@@ -1,8 +1,8 @@
 # Machine JSON API
 
 The `/api/v1` API creates wines, adjusts stock and updates selected details.
-It is disabled until a separate credential is configured. Existing UI and
-legacy `/api/summary`, `/api/wine/<id>` and `/api/timeline` behavior is unchanged.
+It is disabled until a separate credential is configured. The HA app retains
+its UI and legacy routes behind authenticated Home Assistant Ingress.
 No images are downloaded and no AI or Vivino requests are made by these routes.
 
 ## Enable and authenticate
@@ -35,11 +35,13 @@ browser session still cannot write. Browser login or ingress headers alone
 never authorize the new API. `X-Wine-API-Key` is separate from `Authorization`
 so it does not compete with Home Assistant's proxy authentication.
 
-**Network boundary:** this feature protects the new routes, not the whole
-application. Existing form and legacy write routes retain their existing
-authentication; in HA mode they may still be reachable without authentication
-on port 5050. Keep the direct port inaccessible to untrusted clients, use HA
-Ingress, and retain standalone login where applicable. Use HTTPS for the
+**Network boundary:** the HA app publishes no host port and enables
+`HA_INGRESS_ONLY=true`. Every non-versioned route accepts only the Supervisor's
+actual ingress peer address, `172.30.32.2`; forwarding and user headers cannot
+substitute for this check. Versioned API routes always require their own key,
+including requests arriving through ingress. The base container retains these
+settings with `S6_KEEP_ENV=1`. Standalone deployments keep their existing
+`AUTH_ENABLED` login mode and must enable it for exposed legacy routes. Use HTTPS for the
 external connection; the app itself does not terminate TLS. A token sent over
 plain HTTP outside a trusted local/container network can be intercepted.
 Do not log request headers in a reverse proxy or client. No broad CORS access
@@ -242,19 +244,19 @@ held in `secrets.yaml`. HA-MCP calls four fixed HA actions using ordinary wine
 data and an idempotency key; Home Assistant inserts the secret locally. The
 assistant does not receive it or pass it in tool arguments.
 
-See [the integration review and staging guide](HA_INTEGRATION_REVIEW.md) for
+See [the production installation guide](PRODUCTION.md) for
 the complete configuration, beginner-friendly installation steps, logging
 controls, network/authentication boundaries and the Black Pig end-to-end test.
-The [ready-to-copy package](../examples/home-assistant/wine_tracker_staging.yaml)
-targets a separate local staging app and includes add, stock, update and GET.
+The [ready-to-copy package](../examples/home-assistant/wine_tracker.yaml)
+targets the production app installed from the fork and includes add, stock, update and GET.
 Use `ha_call_service` with `return_response: true` and inspect both
 `service_response.status` and `service_response.content.ok`.
 
 Do not pass a real `X-Wine-API-Key` through `ha_manage_app` arguments or chat.
 The native HA action path replaces the earlier generic header-injection
 proposal. In particular, keep REST-command debug logging disabled: HA's debug
-log includes resolved headers. This configuration has been tested at the
-YAML/template and local HTTP boundaries, not deployed to live HA.
+log includes resolved headers. Automated integration tests use isolated
+databases; production verification must not change stock merely for testing.
 
 ## Development and release scope
 
@@ -264,6 +266,6 @@ databases, including the illustrative ID 25 fixture; they do not contact a live
 cellar. No runtime dependencies were added; YAML integration tests use PyYAML.
 `wine-tracker-dev/` is a generated release copy refreshed by
 `scripts/sync-dev-addon.sh`; this source change does not run
-release/deployment scripts or bump a release version.
+the upstream dev release workflow. The fork's HA release is `1.11.0-api.1`.
 
 Photographs are a separate proposal in [API_PHOTOS_PROPOSAL.md](API_PHOTOS_PROPOSAL.md).

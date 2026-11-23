@@ -1,49 +1,49 @@
-# HA package: copy locally to /config/packages/wine_tracker_staging.yaml.
+# HA package: copy locally to /config/packages/wine_tracker.yaml.
 # Token belongs in /config/secrets.yaml, never in action data or a chat.
-# This fixed hostname is for the generated LOCAL app only. Do not make it
+# This fixed hostname is for the production app installed from justind73/ha-wine-tracker only. Do not make it
 # caller-configurable: that would allow the credential to be sent elsewhere.
 rest_command:
-  wine_tracker_staging_add:
-    url: "http://local-wine-tracker-api-staging:5050/api/v1/wines"
+  wine_tracker_add:
+    url: "http://64183197-wine-tracker:5050/api/v1/wines"
     method: post
     content_type: "application/json; charset=utf-8"
     headers:
-      X-Wine-API-Key: !secret wine_tracker_staging_api_token
+      X-Wine-API-Key: !secret wine_tracker_api_token
       Idempotency-Key: "{{ request_id }}"
     payload: "{{ wine | to_json }}"
     timeout: 15
     verify_ssl: true
 
-  wine_tracker_staging_stock:
+  wine_tracker_stock:
     url: >-
-      http://local-wine-tracker-api-staging:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}/stock
+      http://64183197-wine-tracker:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}/stock
     method: post
     content_type: "application/json; charset=utf-8"
     headers:
-      X-Wine-API-Key: !secret wine_tracker_staging_api_token
+      X-Wine-API-Key: !secret wine_tracker_api_token
       Idempotency-Key: "{{ request_id }}"
     payload: "{{ change | to_json }}"
     timeout: 15
     verify_ssl: true
 
-  wine_tracker_staging_update:
+  wine_tracker_update:
     url: >-
-      http://local-wine-tracker-api-staging:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}
+      http://64183197-wine-tracker:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}
     method: patch
     content_type: "application/json; charset=utf-8"
     headers:
-      X-Wine-API-Key: !secret wine_tracker_staging_api_token
+      X-Wine-API-Key: !secret wine_tracker_api_token
       Idempotency-Key: "{{ request_id }}"
     payload: "{{ changes | to_json }}"
     timeout: 15
     verify_ssl: true
 
-  wine_tracker_staging_get:
+  wine_tracker_get:
     url: >-
-      http://local-wine-tracker-api-staging:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}
+      http://64183197-wine-tracker:5050/api/v1/wines/{{ wine_id if wine_id is integer and wine_id > 0 else 0 }}
     method: get
     headers:
-      X-Wine-API-Key: !secret wine_tracker_staging_api_token
+      X-Wine-API-Key: !secret wine_tracker_api_token
     timeout: 15
     verify_ssl: true
 

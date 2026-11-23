@@ -299,9 +299,9 @@ updating selected details or appending tasting notes. It requires a separately
 configured `wine_api_token` (`WINE_API_TOKEN` in Docker) and a retry key for every
 write. It is disabled by default. See [API documentation](wine-tracker/API.md)
 for setup, security boundaries, request examples and Home Assistant MCP usage.
-The [integration and staging guide](wine-tracker/HA_INTEGRATION_REVIEW.md)
-provides native HA REST commands with locally held secrets and an isolated
-test-app package, without exposing the live cellar.
+The [production integration guide](wine-tracker/PRODUCTION.md) provides native
+HA REST commands with locally held secrets. This fork's HA app uses authenticated
+Ingress for the UI and publishes no LAN port; machine requests use the scoped API.
 
 ## Development
 

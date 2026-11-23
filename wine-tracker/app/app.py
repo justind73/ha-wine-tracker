@@ -46,6 +46,7 @@ def parse_user_string(raw):
 
 _dev_auth = os.environ.get("DEV_AUTH", "")
 AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").lower() == "true" or bool(_dev_auth.strip())
+HA_INGRESS_ONLY = os.environ.get("HA_INGRESS_ONLY", "false").lower() == "true"
 
 _users_raw = _dev_auth if _dev_auth.strip() else os.environ.get("USERS", "")
 _USERS = parse_user_string(_users_raw) if AUTH_ENABLED else {}
@@ -406,6 +407,12 @@ def check_auth():
     """Enforce login when AUTH_ENABLED=true (standalone Docker deployment)."""
     # Only this blueprint has mandatory, independent machine authentication.
     if request.blueprint == "wine_api":
+        return
+    if HA_INGRESS_ONLY:
+        # HA authenticates the browser before its Supervisor proxies ingress.
+        # Check the TCP peer, never a caller-supplied forwarding/user header.
+        if request.remote_addr != "172.30.32.2":
+            return jsonify(ok=False, error="ingress_required"), 403
         return
     if not AUTH_ENABLED:
         return

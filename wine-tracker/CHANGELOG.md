@@ -1,14 +1,16 @@
 # Changelog
 
-## Unreleased
+## 1.11.0-api.1
 
 - Add an opt-in, token-authenticated JSON API for creating wines, adjusting
   stock and updating selected details or appending notes. Writes use durable
   idempotency receipts and atomic timeline updates. Includes validation,
   temporary-database tests and Home Assistant MCP documentation.
-- Document native HA REST-command integration with local secrets and provide
-  a reproducible, API-only staging source package with private storage, no
-  host ports and authenticated legacy routes. Add local HTTP integration tests.
+- Provide four native HA REST commands with local secrets and production
+  installation instructions. Add local HTTP integration tests.
+- Protect HA browser/legacy routes with an actual Supervisor ingress peer
+  check, remove the host port mapping, and retain environment settings through
+  s6 startup. Standalone login behavior remains unchanged.
 
 ## 1.11.0
 
