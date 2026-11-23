@@ -5,6 +5,13 @@
 
 A wine cellar tracker that runs directly in your Home Assistant sidebar.
 
+This is [Justin’s fork](https://github.com/justind73/ha-wine-tracker) of
+[Wine Tracker by xenofex7](https://github.com/xenofex7/ha-wine-tracker), retaining
+the original MIT licence. The version badge documents the original version;
+[config.yaml](config.yaml) sets the independent `-api.N` fork build.
+See [the fork overview](../README.md#about-this-fork) and
+[production/HA-MCP setup](PRODUCTION.md) for the authenticated JSON API and installation.
+
 ## About
 
 Wine Tracker manages your whole wine collection from within Home Assistant.
@@ -34,5 +41,5 @@ wines with ratings and pricing, or type everything in yourself.
 Data is stored locally under `/share/wine-tracker/` and preserved across
 updates and restarts.
 
-[version-badge]: https://img.shields.io/badge/version-v1.11.0-blue.svg
+[version-badge]: https://img.shields.io/badge/upstream-v1.11.0-blue.svg
 [license-badge]: https://img.shields.io/badge/license-MIT-green.svg

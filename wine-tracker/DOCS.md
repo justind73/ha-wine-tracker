@@ -11,6 +11,11 @@ directly in your Home Assistant sidebar. Snap a photo and let AI fill in the
 details, search Vivino for ratings and prices, and ask the AI sommelier to add,
 edit or delete wines straight from the chat.
 
+This is [Justin’s fork](../README.md#about-this-fork) of the original application
+by [xenofex7](https://github.com/xenofex7/ha-wine-tracker). For fork installation,
+API security and HA-MCP actions, start with [the production guide](PRODUCTION.md).
+The version badge refers to upstream; [config.yaml](config.yaml) sets the fork build.
+
 ## Screenshots
 
 <p align="center">
@@ -111,10 +116,16 @@ All data (SQLite database + photos) is stored under `/share/wine-tracker/` -
 preserved across add-on updates, restarts and Home Assistant updates.
 
 Back up before updating: **Settings -> Data -> Export backup** writes a ZIP
-with the database, a CSV and all images, which **Settings -> Data -> Import**
-reads back with a duplicate preview.
+with wine/timeline JSON, a CSV and all images, which **Settings -> Data -> Import**
+reads back with a duplicate preview. It does not contain a database snapshot or
+API retry receipts.
 
 ## Home Assistant Sensor (Optional)
+
+This inherited legacy example is for a separately secured standalone deployment.
+The fork’s HA app requires ingress for `/api/summary` and exposes no LAN port;
+use [the authenticated HA commands](PRODUCTION.md#the-six-production-commands)
+instead. Do not weaken authentication or expose port 5050 for this example.
 
 ```yaml
 sensor:
@@ -138,4 +149,4 @@ Planned features are tracked in
 See the full documentation on
 [GitHub](https://github.com/xenofex7/ha-wine-tracker).
 
-[version-badge]: https://img.shields.io/badge/version-v1.11.0-blue.svg
+[version-badge]: https://img.shields.io/badge/upstream-v1.11.0-blue.svg

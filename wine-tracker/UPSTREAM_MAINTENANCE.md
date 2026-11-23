@@ -6,7 +6,7 @@ The fork keeps the original Git history. `origin` is
 local references; it does not merge, publish or install anything.
 
 Checked 23 November 2026: the latest published stable release is `v1.11.0`.
-Our production source `fb8f879` contains upstream main `bea3ce0` in full,
+Our `1.11.0-api.6` release source `6ad6000` contains upstream main `bea3ce0` in full,
 including development commits after that release. No upstream merge is needed
 at this point. Repeat the checks below instead of treating this dated snapshot
 as permanently current. Releases: <https://github.com/xenofex7/ha-wine-tracker/releases>.
@@ -80,10 +80,11 @@ Review the resulting code even when Git merges it without conflicts:
   development app; do not install it or run its sync script for this production
   workflow. The script would need review against our modified manifest first.
 
-Set a new, higher fork version in `wine-tracker/config.yaml`, for example
-`1.12.0-api.1` when incorporating upstream 1.12.0, or increment our current
+For application changes, set a new, higher fork version in
+`wine-tracker/config.yaml`, for example `1.12.0-api.1` when incorporating upstream 1.12.0, or increment our current
 `-api.N` suffix for a fork-only change. Update the fork changelog with the actual
 scope. An upstream version bump alone must not erase the fork suffix.
+Documentation/CI-only maintenance needs neither a version increment nor a production deployment.
 
 ## 3. Test and review before merging to our main
 
@@ -111,7 +112,9 @@ git push -u origin codex/upstream-reviewed-release
 ```
 
 Open a PR **in justind73/ha-wine-tracker**, with base `main`. Review the complete
-diff and wait for GitHub tests to pass before merging. Do not open this maintenance
+diff and wait for GitHub tests to pass before merging. The test workflow runs on
+every PR (including documentation-only changes) and every push to `main`; verify
+the resulting main-branch run as well. Do not open this maintenance
 PR against the original author's repository. Do not force-push/reset main or use
 `git push --tags`: fetched upstream `v*` tags can trigger our inherited image
 publication workflow. GitHub's generic “Sync fork” is not a substitute for this

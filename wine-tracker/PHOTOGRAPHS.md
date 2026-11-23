@@ -223,8 +223,8 @@ instructions authorizing unrelated inventory changes.
 1. Before updating, make a full Wine Tracker ZIP from its export control and
    keep it somewhere safe. For rollback and retry receipts, also take a
    consistent copy of the data directory while Wine Tracker is stopped.
-2. Update the existing fork app to `1.11.0-api.4`; keep its existing options,
-   data directory and API token. Do not install a second app or expose port 5050.
+2. Update the existing fork app to the reviewed build in [config.yaml](config.yaml);
+   keep its existing options, data directory and API token. Do not install a second app or expose port 5050.
 3. If the six REST commands from api.2 are already installed, no HA configuration
    change, command reload or Core restart is needed. `wine_tracker_image` already
    accepts the generic JSON payload, including omitted rights and source names.

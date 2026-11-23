@@ -1,18 +1,30 @@
 RUN_LOCAL_INFO.md
-wine-tracker/.pytest_cache/
-wine-tracker/app/__pycache__/
+
+# Local Python environments and generated test/build caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local cellar data (including SQLite sidecars)
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
 wine-tracker/app/data/
-wine-tracker/tests/__pycache__/
 .DS_Store
 .claude/
 CLAUDE.md
-wine-tracker-dev/app/__pycache__/
 wine-tracker-dev/app/data/
-wine-tracker-dev/tests/__pycache__/
-wine-tracker-dev/.pytest_cache/
 
 # Local environment files (copy .env.example to .env)
 .env
+.env.*
+!.env.example
+secrets.yaml
+secrets.yml
 
 # Local artifacts and private backups (never commit)
 .artifacts/

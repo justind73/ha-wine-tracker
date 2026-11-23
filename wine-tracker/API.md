@@ -270,7 +270,8 @@ databases, including the illustrative ID 25 fixture; they do not contact a live
 cellar. No runtime dependencies were added; YAML integration tests use PyYAML.
 `wine-tracker-dev/` is a generated release copy refreshed by
 `scripts/sync-dev-addon.sh`; this source change does not run
-the upstream dev release workflow. The fork's HA release is `1.11.0-api.2`.
+the upstream dev release workflow. The current fork build is defined in
+[config.yaml](config.yaml); see [CHANGELOG.md](CHANGELOG.md) for release history.
 
 The [photograph guide](PHOTOGRAPHS.md) documents the image/list contracts,
 source and rights validation, local storage and supplier-independent order workflow.

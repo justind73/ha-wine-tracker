@@ -2,10 +2,9 @@ name: Tests
 
 on:
   pull_request:
-    paths:
-      - "wine-tracker/**"
-      - "examples/home-assistant/**"
-      - ".github/workflows/tests.yml"
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read

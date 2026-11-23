@@ -275,7 +275,7 @@ def test_unsafe_url(value):
         images.https_url(value)
 
 
-@pytest.mark.parametrize("address", ["127.0.0.1","10.0.0.1","172.30.32.1","192.168.1.91",
+@pytest.mark.parametrize("address", ["127.0.0.1","10.0.0.1","172.30.32.1","192.168.1.10",
     "169.254.169.254","0.0.0.0","224.0.0.1","240.0.0.1","::1","fc00::1","fe80::1",
     "::ffff:8.8.8.8","2002:0808:0808::1","64:ff9b::808:808"])
 def test_every_dns_answer_must_be_public(monkeypatch,address):
