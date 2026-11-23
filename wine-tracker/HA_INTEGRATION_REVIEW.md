@@ -31,9 +31,28 @@ Its credential was generated and configured entirely on HA, then added to
 The original secrets file is backed up privately in the SSH app's data directory
 at `/data/wine-tracker-api-staging-access/secrets.before-wine-staging.yaml`.
 The existing packages include was preserved, and `ha core check` passed.
-**HA has not been restarted:** first loading `rest_command` and testing through
-HA-MCP still require a separately authorized HA restart. The completed checks
-used the actual staging HTTP API, not the as-yet-unloaded HA actions.
+The user subsequently restarted HA. All four staging `rest_command` services
+and `rest_command.reload` are now registered. The complete HA-MCP roundtrip
+passed on 23 November 2026 using `ha_call_service(return_response=true,
+wait=false)` with only wine data, IDs and retry keys in tool arguments:
+
+- Create `The Prize Shiraz (HA-MCP staging test)`, producer The Black Pig,
+  six bottles, illustrative price 12.50: HTTP 201, returned fixture ID **2**.
+- Consume one with the exact personal note: HTTP 200, five bottles.
+- Repeat identical `mcp-black-pig-consume-001`: HTTP 200 and
+  `Idempotency-Replayed: true`. A separate GET confirms five bottles and the
+  personal note exactly once, after the original commentary.
+- Reuse that key with delta -2: HTTP 409 `idempotency_conflict`. A separate
+  GET confirms stock is unchanged at five.
+- Restock two: seven bottles. Append a second note, then explicitly replace
+  the notes with the original commentary plus the personal note. Separate
+  GETs verify each change; price remains 12.50.
+
+The remaining HA-MCP test fixture is ID **2**, seven bottles, with
+`Classic Cellar commentary` followed by the user's exact tasting note. Fixture
+ID 1 from the earlier direct-HTTP test remains separate. Neither is live stock.
+The installed package retains warning-level REST-command logging. The assistant
+performed no additional HA restart.
 
 All 477 local tests passed (475 in the sandbox; the two HTTP tests passed when
 rerun with loopback access). PR #1 remains unmerged. The existing Wine Tracker
